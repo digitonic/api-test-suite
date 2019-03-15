@@ -1,0 +1,26 @@
+{
+  "name": "digitonic/api-test-suite",
+  "type": "laravel package",
+  "authors": [
+    {
+      "name": "MrTammer",
+      "email": "juanick@hotmail.fr"
+    }
+  ],
+  "minimum-stability": "stable",
+  "require": {
+    "ext-json": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Digitonic\\ApiTestSuite\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Digitonic\\ApiTestSuite\\ApiTestSuiteServiceProvider"
+      ]
+    }
+  }
+}
