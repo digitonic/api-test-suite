@@ -434,9 +434,9 @@ abstract class CRUDTestCase extends TestCase
 
         if (isset($expected['team_id'])) {
             $identifier = $this->identifier;
-            $expected['team_uuid'] = Team::find($expected['team_id'])->$identifier;
+            $expected['team_'.$this->identifier] = Team::find($expected['team_id'])->$identifier;
             unset($expected['team_id']);
-            $this->assertTransformerReplacesKeys(['team_id' => 'team_uuid'], $data);
+            $this->assertTransformerReplacesKeys(['team_id' => 'team_'.$this->identifier], $data);
         }
         foreach ($expected as $key => $value) {
             $this->assertArrayHasKey($key, $data);
@@ -713,9 +713,10 @@ abstract class CRUDTestCase extends TestCase
 
         // TODO this should be made more flexible to accommodate other types if required
         if ($reflection->hasMethod('commentable')) {
-            $entityData['commentable_id'] = Campaign::where($this->identifier, $entityData['campaign_uuid'])->first()->id;
+            $entityData['commentable_id']
+                = Campaign::where($this->identifier, $entityData['campaign_'.$this->identifier])->first()->id;
             $entityData['commentable_type'] = $entityData['type'];
-            unset($entityData['campaign_uuid']);
+            unset($entityData['campaign_'.$this->identifier]);
             unset($entityData['type']);
         }
         return $entityData;
