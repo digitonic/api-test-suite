@@ -9,13 +9,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Mdoc\Campaigns\Models\Campaign;
-use Mdoc\Concerns\HasUuid;
 use Mdoc\Users\Models\Team;
 use Tests\TestCase;
 
 abstract class CRUDTestCase extends TestCase
 {
-    use HasUuid;
+    // TODO write a read.me with assumptions of the package about app structure
 
     /**
      * @var array
@@ -39,6 +38,11 @@ abstract class CRUDTestCase extends TestCase
     protected $entitiesPerPage;
 
     protected $identifier;
+
+    /**
+     * @var \Closure
+     */
+    protected $identifierGenerator;
 
     /**
      * @return string
@@ -123,6 +127,7 @@ abstract class CRUDTestCase extends TestCase
         $this->entitiesPerPage = config('digitonic.api-test-suite.entities_per_page');
         $this->entitiesNumber = $this->entitiesPerPage * 1.5;
         $this->identifier = config('digitonic.api-test-suite.identifier_field');
+        $this->identifierGenerator = config('digitonic.api-test-suite.identifier_generation_closure');
         $this->entities = new Collection();
     }
 
@@ -143,6 +148,8 @@ abstract class CRUDTestCase extends TestCase
 
     protected function generateEntities()
     {
+        // todo make it dependent on user defined factories
+        // todo get rid of teams
         if (in_array($this->httpAction(), ['put', 'get', 'delete'])) {
             $number = $this->shouldReturnsStatus(Response::HTTP_NOT_FOUND) ? 1 : $this->entitiesNumber;
 
@@ -213,7 +220,7 @@ abstract class CRUDTestCase extends TestCase
         if ($this->shouldReturnsStatus(Response::HTTP_UNAUTHORIZED)) {
             Auth::logout();
             /** @var TestResponse $response */
-            $response = $this->doRequest($this->entityData(), [$this->getUuid()]);
+            $response = $this->doRequest($this->entityData(), [$this->getIdentifier()]);
             $response->assertStatus(Response::HTTP_UNAUTHORIZED);
             $this->assertErrorResponseContent(
                 $response,
@@ -226,7 +233,7 @@ abstract class CRUDTestCase extends TestCase
     protected function assertNotFound()
     {
         if ($this->shouldReturnsStatus(Response::HTTP_NOT_FOUND)) {
-            $response = $this->doAuthenticatedRequest(null, [$this->generateUuid()]);
+            $response = $this->doAuthenticatedRequest(null, [$this->identifierGenerator->call($this)]);
             $response->assertStatus(Response::HTTP_NOT_FOUND);
             $this->assertErrorResponseContent(
                 $response,
@@ -258,7 +265,7 @@ abstract class CRUDTestCase extends TestCase
         unset($data[$key]);
 
         /** @var TestResponse $response */
-        $response = $this->doAuthenticatedRequest($data, [$this->getUuid()]);
+        $response = $this->doAuthenticatedRequest($data, [$this->getIdentifier()]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         if ($assertValidationResponse) {
             $this->assertValidationResponseContent(
@@ -334,17 +341,17 @@ abstract class CRUDTestCase extends TestCase
                 unset($data[$included]);
             }
             /** @var TestResponse $response */
-            $response = $this->doAuthenticatedRequest($data, [$this->getUuid()]);
+            $response = $this->doAuthenticatedRequest($data, [$this->getIdentifier()]);
             $response->assertStatus(Response::HTTP_ACCEPTED);
             $this->checkTransformerData($response);
-            $this->assertCount(1, $this->entityClass()::where([$this->identifier => $this->getUuid()])->get());
+            $this->assertCount(1, $this->entityClass()::where([$this->identifier => $this->getIdentifier()])->get());
         }
     }
 
     protected function assertRetrieve()
     {
         if ($this->shouldReturnsStatus(Response::HTTP_OK) && !$this->isListAction()) {
-            $response = $this->doAuthenticatedRequest(null, [$this->getUuid()]);
+            $response = $this->doAuthenticatedRequest(null, [$this->getIdentifier()]);
             $response->assertStatus(Response::HTTP_OK);
             $this->checkTransformerData($response);
         }
@@ -353,7 +360,7 @@ abstract class CRUDTestCase extends TestCase
     protected function assertListAll()
     {
         if ($this->shouldReturnsStatus(Response::HTTP_OK) && $this->isListAction()) {
-            $response = $this->doAuthenticatedRequest(null, [$this->getUuid()]);
+            $response = $this->doAuthenticatedRequest(null, [$this->getIdentifier()]);
             $response->assertStatus(Response::HTTP_OK);
             $this->checkTransformerData($response);
             $this->assertPagination();
@@ -363,7 +370,7 @@ abstract class CRUDTestCase extends TestCase
     protected function assertDelete()
     {
         if ($this->shouldReturnsStatus(Response::HTTP_NO_CONTENT)) {
-            $response = $this->doAuthenticatedRequest(null, [$this->getUuid()]);
+            $response = $this->doAuthenticatedRequest(null, [$this->getIdentifier()]);
             $response->assertStatus(Response::HTTP_NO_CONTENT);
             $this->assertEmpty($response->getContent());
             $this->assertNull($this->entityClass()::find($this->entities->first()->id));
@@ -480,7 +487,7 @@ abstract class CRUDTestCase extends TestCase
     /**
      * @return string|null
      */
-    protected function getUuid()
+    protected function getIdentifier()
     {
         $identifier = $this->identifier;
         return $this->entities->isEmpty() ? null : $this->entities->first()->$identifier;
@@ -569,7 +576,7 @@ abstract class CRUDTestCase extends TestCase
             $this->assertPaginationResponseStructure($response);
         } else {
             $this->assertCount($this->entitiesNumber, $this->getResponseData(
-                $this->doAuthenticatedRequest(null, [$this->getUuid()])
+                $this->doAuthenticatedRequest(null, [$this->getIdentifier()])
             ));
         }
     }
@@ -599,7 +606,7 @@ abstract class CRUDTestCase extends TestCase
             if (empty($headers)) {
                 $headers['not_empty'] = 'not_empty';
             }
-            $response = $this->doAuthenticatedRequest(null, [$this->getUuid()], $headers);
+            $response = $this->doAuthenticatedRequest(null, [$this->getIdentifier()], $headers);
             $response->assertStatus(Response::HTTP_BAD_REQUEST);
             $this->assertErrorResponseContent(
                 $response,
@@ -609,7 +616,7 @@ abstract class CRUDTestCase extends TestCase
 
             if ($value) {
                 $headers[$header] = '123456789';
-                $response = $this->doAuthenticatedRequest(null, [$this->getUuid()], $headers);
+                $response = $this->doAuthenticatedRequest(null, [$this->getIdentifier()], $headers);
                 $response->assertStatus(Response::HTTP_BAD_REQUEST);
                 $this->assertErrorResponseContent(
                     $response,
