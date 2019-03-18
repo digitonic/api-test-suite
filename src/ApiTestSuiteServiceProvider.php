@@ -32,6 +32,7 @@ class ApiTestSuiteServiceProvider extends ServiceProvider
 
         $this->publishes([
             __DIR__.'/../config/api-test-suite.php' => config_path('digitonic/api-test-suite.php'),
+            __DIR__.'/../templates/' => base_path('tests/templates/')
         ]);
     }
 }

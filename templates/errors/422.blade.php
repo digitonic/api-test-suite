@@ -1,0 +1,1 @@
+{"error":{"code":422,"http_code":422,"message":"The given data was invalid.","errors":{"{{$fieldName}}":\["The {{$formattedFieldName}} field is required."\]}}}

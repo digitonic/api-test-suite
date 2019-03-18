@@ -7,6 +7,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
 use Mdoc\Campaigns\Models\Campaign;
 use Mdoc\Users\Models\Team;
@@ -37,12 +38,20 @@ abstract class CRUDTestCase extends TestCase
      */
     protected $entitiesPerPage;
 
+    /**
+     * @var \Closure
+     */
     protected $identifier;
 
     /**
      * @var \Closure
      */
     protected $identifierGenerator;
+
+    /**
+     * @var \Closure
+     */
+    protected $ownedField;
 
     /**
      * @return string
@@ -102,7 +111,7 @@ abstract class CRUDTestCase extends TestCase
     /**
      * @return string|null
      */
-    abstract protected function authorizationBearer();
+    abstract protected function ownedClass();
 
     /**
      * @return array
@@ -127,7 +136,8 @@ abstract class CRUDTestCase extends TestCase
         $this->entitiesPerPage = config('digitonic.api-test-suite.entities_per_page');
         $this->entitiesNumber = $this->entitiesPerPage * 1.5;
         $this->identifier = config('digitonic.api-test-suite.identifier_field');
-        $this->identifierGenerator = config('digitonic.api-test-suite.identifier_generation_closure');
+        $this->identifierGenerator = config('digitonic.api-test-suite.identifier_faker');
+        $this->ownedField = config('digitonic.api-test-suite.owned_class_field');
         $this->entities = new Collection();
     }
 
@@ -179,7 +189,7 @@ abstract class CRUDTestCase extends TestCase
                 }
             });
 
-            if ($number == $this->entitiesNumber && $this->authorizationBearer()) {
+            if ($number == $this->entitiesNumber && $this->ownedClass()) {
                 $team2 = factory(Team::class)->create([
                     'owner_id' => $this->user->id
                 ]);
@@ -194,13 +204,13 @@ abstract class CRUDTestCase extends TestCase
                     unset($entityData[$attribute]);
                 }
 
-                if ($this->authorizationBearer()) {
-                    if ($this->authorizationBearer() == $this->entityClass()) {
+                if ($this->ownedClass()) {
+                    if ($this->ownedClass() == Team::class) {
                         $entityData['team_id'] = $team2->id;
                     } else {
-                        $identifier = $this->identifier;
-                        $entityData[$this->getAuthorizationBearerKey()] =
-                            factory($this->authorizationBearer())->create()->$identifier;
+                        $identifier = $this->identifier->call($this);
+                        $entityData[$this->ownedField->call($this)] =
+                            factory($this->ownedClass())->create()->$identifier;
                     }
                 }
 
@@ -221,12 +231,7 @@ abstract class CRUDTestCase extends TestCase
             Auth::logout();
             /** @var TestResponse $response */
             $response = $this->doRequest($this->entityData(), [$this->getIdentifier()]);
-            $response->assertStatus(Response::HTTP_UNAUTHORIZED);
-            $this->assertErrorResponseContent(
-                $response,
-                Response::HTTP_UNAUTHORIZED,
-                'Unauthenticated'
-            );
+            $this->assertErrorFormat($response, Response::HTTP_UNAUTHORIZED);
         }
     }
 
@@ -234,12 +239,7 @@ abstract class CRUDTestCase extends TestCase
     {
         if ($this->shouldReturnsStatus(Response::HTTP_NOT_FOUND)) {
             $response = $this->doAuthenticatedRequest(null, [$this->identifierGenerator->call($this)]);
-            $response->assertStatus(Response::HTTP_NOT_FOUND);
-            $this->assertErrorResponseContent(
-                $response,
-                Response::HTTP_NOT_FOUND,
-                'The entity you are looking for was not found'
-            );
+            $this->assertErrorFormat($response, Response::HTTP_NOT_FOUND);
         }
     }
 
@@ -268,11 +268,10 @@ abstract class CRUDTestCase extends TestCase
         $response = $this->doAuthenticatedRequest($data, [$this->getIdentifier()]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         if ($assertValidationResponse) {
-            $this->assertValidationResponseContent(
-                $response,
-                Response::HTTP_UNPROCESSABLE_ENTITY,
-                $key
-            );
+            $this->assertErrorFormat($response, Response::HTTP_UNPROCESSABLE_ENTITY, [
+                'fieldName' => $key,
+                'formattedFieldName' => str_replace('_', ' ', $key)
+            ]);
         }
     }
 
@@ -280,7 +279,7 @@ abstract class CRUDTestCase extends TestCase
     {
         if ($this->shouldReturnsStatus(Response::HTTP_FORBIDDEN)) {
             $data = $this->entityData();
-            $data[$this->getAuthorizationBearerKey()] = 100000000;
+            $data[$this->ownedField->call($this)] = 100000000; // todo make generator
             foreach (array_keys($this->includedData()) as $key) {
                 unset($data[$key]);
             }
@@ -289,16 +288,14 @@ abstract class CRUDTestCase extends TestCase
             }
             $entity = factory($this->entityClass())->create($data);
             /** @var TestResponse $response */
-            $response = $this->doRequest($data, [$entity[$this->identifier]]);
-            $response->assertStatus(Response::HTTP_FORBIDDEN);
-            $this->assertErrorResponseContent(
-                $response,
-                Response::HTTP_FORBIDDEN,
-                'This action is unauthorized'
-            );
+            $response = $this->doRequest($data, [$entity[$this->identifier->call($this)]]);
+            $this->assertErrorFormat($response, Response::HTTP_FORBIDDEN);
         }
     }
 
+    /**
+     * @throws \ReflectionException
+     */
     protected function assertCreate()
     {
         if ($this->shouldReturnsStatus(Response::HTTP_CREATED)) {
@@ -344,7 +341,9 @@ abstract class CRUDTestCase extends TestCase
             $response = $this->doAuthenticatedRequest($data, [$this->getIdentifier()]);
             $response->assertStatus(Response::HTTP_ACCEPTED);
             $this->checkTransformerData($response);
-            $this->assertCount(1, $this->entityClass()::where([$this->identifier => $this->getIdentifier()])->get());
+            $this->assertCount(1, $this->entityClass()::where([
+                $this->identifier->call($this) => $this->getIdentifier()
+            ])->get());
         }
     }
 
@@ -406,7 +405,7 @@ abstract class CRUDTestCase extends TestCase
      */
     protected function assertIndividualEntityTransformerData($data)
     {
-        $this->assertTransformerReplacesKeys(['id' => $this->identifier], $data);
+        $this->assertTransformerReplacesKeys(['id' => $this->identifier->call($this)], $data);
         $this->assertDataIsPresent($data);
         $this->assertTimestamps($data);
         $this->assertLinks($data);
@@ -418,7 +417,7 @@ abstract class CRUDTestCase extends TestCase
      */
     protected function assertTransformerReplacesKeys(array $replacements, $data)
     {
-        if ($this->authorizationBearer()) {
+        if ($this->ownedClass()) {
             foreach ($replacements as $original => $substitute) {
                 $this->assertArrayNotHasKey($original, $data);
                 $this->assertArrayHasKey($substitute, $data);
@@ -440,10 +439,10 @@ abstract class CRUDTestCase extends TestCase
         }
 
         if (isset($expected['team_id'])) {
-            $identifier = $this->identifier;
-            $expected['team_'.$this->identifier] = Team::find($expected['team_id'])->$identifier;
+            $identifier = $this->identifier->call($this);
+            $expected['team_' . $this->identifier->call($this)] = Team::find($expected['team_id'])->$identifier;
             unset($expected['team_id']);
-            $this->assertTransformerReplacesKeys(['team_id' => 'team_'.$this->identifier], $data);
+            $this->assertTransformerReplacesKeys(['team_id' => 'team_' . $this->identifier->call($this)], $data);
         }
         foreach ($expected as $key => $value) {
             $this->assertArrayHasKey($key, $data);
@@ -470,7 +469,7 @@ abstract class CRUDTestCase extends TestCase
         foreach ($this->requiredLinks() as $rel => $routeName) {
             $this->assertContains([
                 'rel' => $rel,
-                'uri' => route($routeName, $data[$this->identifier])
+                'uri' => route($routeName, $data[$this->identifier->call($this)])
             ], $data['links']);
         }
     }
@@ -489,7 +488,7 @@ abstract class CRUDTestCase extends TestCase
      */
     protected function getIdentifier()
     {
-        $identifier = $this->identifier;
+        $identifier = $this->identifier->call($this);
         return $this->entities->isEmpty() ? null : $this->entities->first()->$identifier;
     }
 
@@ -543,7 +542,7 @@ abstract class CRUDTestCase extends TestCase
     protected function generateUpdateData($data)
     {
         foreach ($data as $key => $datum) {
-            if (strpos($key, $this->identifier) === false) {
+            if (strpos($key, $this->identifier->call($this)) === false) {
                 if (is_array($datum)) {
                     $data[$key] = $this->generateUpdateData($datum);
                 } else {
@@ -561,12 +560,13 @@ abstract class CRUDTestCase extends TestCase
     protected function assertPagination()
     {
         if ($this->shouldPaginate()) {
+            // test page 1
             $response = $this->doAuthenticatedRequest(null, ['page' => 1, 'per_page' => $this->entitiesPerPage]);
             $response->assertStatus(Response::HTTP_OK);
             $this->assertCount($this->entitiesPerPage, json_decode($response->getContent(), true)['data']);
-
             $this->assertPaginationResponseStructure($response);
 
+            //test page 2
             $response = $this->doAuthenticatedRequest(null, ['page' => 2, 'per_page' => $this->entitiesPerPage]);
             $response->assertStatus(Response::HTTP_OK);
             $this->assertCount(
@@ -581,21 +581,6 @@ abstract class CRUDTestCase extends TestCase
         }
     }
 
-    /**
-     * @param TestResponse $response
-     */
-    protected function assertPaginationResponseStructure(TestResponse $response)
-    {
-        $response->assertJsonStructure([
-            'meta' => [
-                'pagination' => [
-                    'total' => [],
-                ],
-            ],
-        ]);
-        $response->assertJsonFragment(['total' => $this->entitiesNumber]);
-    }
-
     protected function assertRequiredHeaders()
     {
         foreach ($this->requiredHeaders() as $header => $value) {
@@ -607,65 +592,14 @@ abstract class CRUDTestCase extends TestCase
                 $headers['not_empty'] = 'not_empty';
             }
             $response = $this->doAuthenticatedRequest(null, [$this->getIdentifier()], $headers);
-            $response->assertStatus(Response::HTTP_BAD_REQUEST);
-            $this->assertErrorResponseContent(
-                $response,
-                Response::HTTP_BAD_REQUEST,
-                "The '\w+' header must be set to one of the following values '\[.+\]'"
-            );
+            $this->assertErrorFormat($response, Response::HTTP_BAD_REQUEST, []);
 
             if ($value) {
                 $headers[$header] = '123456789';
                 $response = $this->doAuthenticatedRequest(null, [$this->getIdentifier()], $headers);
-                $response->assertStatus(Response::HTTP_BAD_REQUEST);
-                $this->assertErrorResponseContent(
-                    $response,
-                    Response::HTTP_BAD_REQUEST,
-                    "The '\w+' header must be set to one of the following values '\[.+\]'"
-                );
+                $this->assertErrorFormat($response, Response::HTTP_BAD_REQUEST);
             }
         }
-    }
-
-    /**
-     * @param $response
-     * @param $expectedCode
-     * @param $messagePattern
-     */
-    protected function assertErrorResponseContent($response, $expectedCode, $messagePattern)
-    {
-        $this->assertRegExp(
-            "/{\"error\":{\"code\":{$expectedCode},\"http_code\":{$expectedCode},\"message\":\"{$messagePattern}\"}}/",
-            $response->getContent()
-        );
-    }
-
-    /**
-     * @param $response
-     * @param $expectedCode
-     * @param $fieldName
-     */
-    protected function assertValidationResponseContent($response, $expectedCode, $fieldName)
-    {
-        $formattedFieldName = str_replace('_', ' ', $fieldName);
-
-        $this->assertRegExp(
-            "/{\"error\":{\"code\":{$expectedCode},\"http_code\":{$expectedCode},"
-            . "\"message\":\"The given data was invalid.\","
-            . "\"errors\":{\"{$fieldName}\":\[\"The {$formattedFieldName} field is required.\"\]}}}/",
-            $response->getContent()
-        );
-    }
-
-    /**
-     * @param string $attribute
-     * @return mixed
-     */
-    protected function schemaHasAttribute(string $attribute)
-    {
-        $class = $this->entityClass();
-
-        return Schema::hasColumn((new $class)->getTable(), $attribute);
     }
 
     /**
@@ -679,6 +613,17 @@ abstract class CRUDTestCase extends TestCase
             $entityData = array_merge($entityData, ['team_id' => $teamId]);
         }
         return $entityData;
+    }
+
+    /**
+     * @param string $attribute
+     * @return mixed
+     */
+    protected function schemaHasAttribute(string $attribute)
+    {
+        $class = $this->entityClass();
+
+        return Schema::hasColumn((new $class)->getTable(), $attribute);
     }
 
     /**
@@ -696,20 +641,6 @@ abstract class CRUDTestCase extends TestCase
     }
 
     /**
-     * @return string
-     */
-    protected function getAuthorizationBearerKey()
-    {
-        if ($this->authorizationBearer() == $this->entityClass()) {
-            return 'team_id';
-        }
-
-        $class = explode('\\', $this->authorizationBearer());
-
-        return strtolower(array_pop($class)) . '_' . $this->identifier;
-    }
-
-    /**
      * @param $entityData
      * @return array
      * @throws \ReflectionException
@@ -721,11 +652,46 @@ abstract class CRUDTestCase extends TestCase
         // TODO this should be made more flexible to accommodate other types if required
         if ($reflection->hasMethod('commentable')) {
             $entityData['commentable_id']
-                = Campaign::where($this->identifier, $entityData['campaign_'.$this->identifier])->first()->id;
+                = Campaign::where($this->identifier->call($this), $entityData['campaign_' . $this->identifier->call($this)])->first()->id;
             $entityData['commentable_type'] = $entityData['type'];
-            unset($entityData['campaign_'.$this->identifier]);
+            unset($entityData['campaign_' . $this->identifier->call($this)]);
             unset($entityData['type']);
         }
         return $entityData;
+    }
+
+    /**
+     * The template used allows regular expressions, e.g. in the default 400.blade.php template
+     *
+     * @param TestResponse $response
+     * @param $status
+     * @param array $data
+     */
+    protected function assertErrorFormat(TestResponse $response, $status, $data = [])
+    {
+        $response->assertStatus($status);
+        $this->assertRegExp(
+            "/" . View::file(
+                config('digitonic.api-test-suite.templates.base_path') . 'errors/' . $status . '.blade.php',
+                $data
+            )->render() . "/",
+            $response->getContent()
+        );
+    }
+
+    /**
+     * @param TestResponse $response
+     */
+    protected function assertPaginationResponseStructure(TestResponse $response)
+    {
+        $this->assertRegExp(
+            "/" . View::file(
+                config('digitonic.api-test-suite.templates.base_path') . 'pagination/pagination.blade.php',
+                [
+                    'total' => $this->entitiesNumber
+                ]
+            )->render() . "/",
+            $response->getContent()
+        );
     }
 }
