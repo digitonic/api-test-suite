@@ -41,7 +41,7 @@ class DataGenerator implements CRUDTestCaseI, AssertsTransformerData
             $entityData = $this->prepareEntityData();
             $this->entities = $this->createEntities($entityData);
 
-            if ($this->numberOfEntitiesToGenerate() == $this->testCase->entitiesNumber && $this->ownedClass()) {
+            if ($this->numberOfEntitiesToGenerate() == $this->testCase->entitiesNumber() && $this->ownedClass()) {
                 $team2 = $this->addTeamToUser();
                 $entityData = $this->prepareEntityData();
 
@@ -273,7 +273,7 @@ class DataGenerator implements CRUDTestCaseI, AssertsTransformerData
      */
     protected function numberOfEntitiesToGenerate()
     {
-        return $this->testCase->shouldReturnsStatus(Response::HTTP_NOT_FOUND) ? 1 : $this->testCase->entitiesNumber;
+        return $this->testCase->shouldReturnsStatus(Response::HTTP_NOT_FOUND) ? 1 : $this->testCase->entitiesNumber();
     }
 
     /**

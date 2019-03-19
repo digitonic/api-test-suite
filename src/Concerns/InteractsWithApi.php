@@ -10,9 +10,9 @@ trait InteractsWithApi
      * @param null $data
      * @param array $params
      * @param array $headers
-     * @return mixed
+     * @return TestResponse
      */
-    protected function doAuthenticatedRequest($data = null, array $params = [], $headers = [])
+    public function doAuthenticatedRequest($data = null, array $params = [], $headers = [])
     {
         return $this->actingAs($this->dataGenerator->user)->doRequest($data, $params, $headers);
     }

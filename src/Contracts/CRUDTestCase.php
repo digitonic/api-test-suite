@@ -15,11 +15,6 @@ interface CRUDTestCase
     public function httpAction();
 
     /**
-     * @return bool
-     */
-    public function shouldPaginate();
-
-    /**
      * @return array
      */
     public function requiredFields();
