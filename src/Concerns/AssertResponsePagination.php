@@ -2,38 +2,17 @@
 
 namespace Digitonic\ApiTestSuite\Concerns;
 
-use Digitonic\ApiTestSuite\DataGenerator;
 use Illuminate\Foundation\Testing\TestResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\View;
 
 trait AssertResponsePagination
 {
-    public function assertPagination(DataGenerator $dataGenerator)
-    {
-        $entitiesNumber = $this->entitiesNumber();
-        if ($this->shouldPaginate()) {
-            $entitiesPerPage = $this->entitiesPerPage();
-            // test page 1
-            /** @var TestResponse $response */
-            $response = $this->doAuthenticatedRequest(null, ['page' => 1, 'per_page' => $entitiesPerPage]);
-            $this->assertPaginationFormat($response, $entitiesPerPage, $entitiesNumber);
-
-            //test page 2
-            $response = $this->doAuthenticatedRequest(null, ['page' => 2, 'per_page' => $entitiesPerPage]);
-            $this->assertPaginationFormat($response, $entitiesNumber - $entitiesPerPage, $entitiesNumber);
-        } else {
-            $this->assertCount($entitiesNumber, $this->getResponseData(
-                $this->doAuthenticatedRequest(null, [$dataGenerator->getIdentifier()])
-            ));
-        }
-    }
-
     /**
      * @param $response
      * @param $expectedCount
      */
-    protected function assertPaginationFormat(TestResponse $response, $expectedCount, $expectedTotal)
+    public function assertPaginationFormat(TestResponse $response, $expectedCount, $expectedTotal)
     {
         $response->assertStatus(Response::HTTP_OK);
         $this->assertCount(

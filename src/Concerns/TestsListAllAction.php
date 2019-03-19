@@ -36,7 +36,7 @@ trait TestsListAllAction
     /**
      * @return bool
      */
-    public function shouldPaginate()
+    public function shouldAssertPaginate()
     {
         return true;
     }

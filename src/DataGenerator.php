@@ -2,16 +2,14 @@
 
 namespace Digitonic\ApiTestSuite;
 
-use Digitonic\ApiTestSuite\Contracts\AssertsTransformerData;
-use Digitonic\ApiTestSuite\Contracts\CRUDTestCase as CRUDTestCaseI;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use Mdoc\Users\Models\Team;
 use Mdoc\Campaigns\Models\Campaign;
+use Mdoc\Users\Models\Team;
 
-class DataGenerator implements CRUDTestCaseI, AssertsTransformerData
+class DataGenerator
 {
     /**
      * @var CRUDTestCase
@@ -41,7 +39,7 @@ class DataGenerator implements CRUDTestCaseI, AssertsTransformerData
             $entityData = $this->prepareEntityData();
             $this->entities = $this->createEntities($entityData);
 
-            if ($this->numberOfEntitiesToGenerate() == $this->testCase->entitiesNumber() && $this->ownedClass()) {
+            if ($this->numberOfEntitiesToGenerate() == $this->entitiesNumber() && $this->ownedClass()) {
                 $team2 = $this->addTeamToUser();
                 $entityData = $this->prepareEntityData();
 
@@ -49,7 +47,7 @@ class DataGenerator implements CRUDTestCaseI, AssertsTransformerData
                     $newOwningEntity = $team2;
                     $identifier = 'id';
                 } else {
-                    $identifier = $this->testCase->identifier->call($this);
+                    $identifier = $this->identifier->call($this);
                     $newOwningEntity = factory($this->ownedClass())->create();
                 }
 
@@ -104,144 +102,24 @@ class DataGenerator implements CRUDTestCaseI, AssertsTransformerData
     }
 
     /**
-     * @return string
-     */
-    public function routeName()
-    {
-        return $this->testCase->routeName();
-    }
-
-    /**
-     * @return string
-     */
-    public function httpAction()
-    {
-        return $this->testCase->httpAction();
-    }
-
-    /**
-     * @return bool
-     */
-    public function entityHasTimestamps()
-    {
-        return $this->testCase->entityHasTimestamps();
-    }
-
-    /**
-     * @return bool
-     */
-    public function shouldPaginate()
-    {
-        return $this->testCase->shouldPaginate();
-    }
-
-    /**
-     * @return array
-     */
-    public function requiredFields()
-    {
-        return $this->testCase->requiredFields();
-    }
-
-    /**
-     * @return array
-     */
-    public function requiredHeaders()
-    {
-        return $this->testCase->requiredHeaders();
-    }
-
-    /**
-     * @return array
-     */
-    public function requiredLinks()
-    {
-        return $this->testCase->requiredLinks();
-    }
-
-    /**
-     * @return array
-     */
-    public function statusCodes()
-    {
-        return $this->testCase->statusCodes();
-    }
-
-    /**
-     * @return array
-     */
-    public function entityData()
-    {
-        return $this->testCase->entityData();
-    }
-
-    /**
-     * @return string
-     */
-    public function entityClass()
-    {
-        return $this->testCase->entityClass();
-    }
-
-    /**
-     * @return array
-     */
-    public function jsonFields()
-    {
-        return $this->testCase->jsonFields();
-    }
-
-    /**
-     * @return string|null
-     */
-    public function ownedClass()
-    {
-        return $this->testCase->ownedClass();
-    }
-
-    /**
-     * @return array
-     */
-    public function includedData()
-    {
-        return $this->testCase->includedData();
-    }
-
-    /**
-     * @return array
-     */
-    public function transformerData()
-    {
-        return $this->testCase->transformerData();
-    }
-
-    /**
-     * @return array
-     */
-    public function manyToManyRelationships()
-    {
-        return $this->testCase->manyToManyRelationships();
-    }
-
-    /**
      * @param $entityData
      * @return array
      */
     protected function unsetExternalData(&$entityData)
     {
-        foreach (array_keys($this->testCase->includedData()) as $key) {
+        foreach (array_keys($this->includedData()) as $key) {
             unset($entityData[$key]);
         }
 
-        foreach ($this->testCase->manyToManyRelationships() as $class => $attribute) {
+        foreach ($this->manyToManyRelationships() as $class => $attribute) {
             unset($entityData[$attribute]);
         }
     }
 
     private function createIncludedData($idKey, $entity)
     {
-        foreach ($this->testCase->includedData() as $key => $class) {
-            factory($class)->create(array_merge($this->testCase->entityData()[$key], [$idKey => $entity->id]));
+        foreach ($this->includedData() as $key => $class) {
+            factory($class)->create(array_merge($this->entityData()[$key], [$idKey => $entity->id]));
         }
     }
 
@@ -251,20 +129,20 @@ class DataGenerator implements CRUDTestCaseI, AssertsTransformerData
      */
     private function createManyToManyRelatedData($entity)
     {
-        foreach ($this->testCase->manyToManyRelationships() as $class => $attribute) {
-            foreach ($this->testCase->entityData()[$attribute] as $id) {
+        foreach ($this->manyToManyRelationships() as $class => $attribute) {
+            foreach ($this->entityData()[$attribute] as $id) {
                 if (!$relatedEntity = $class::find($id)) {
                     factory($class)->create(['id' => $id]);
                 }
             }
             $relation = Str::camel($attribute);
-            $entity->$relation()->sync($this->testCase->entityData()[$attribute]);
+            $entity->$relation()->sync($this->entityData()[$attribute]);
         }
     }
 
     private function getIdKey()
     {
-        $idKey = explode('\\', $this->testCase->entityClass());
+        $idKey = explode('\\', $this->entityClass());
         return strtolower(array_last($idKey)) . '_id';
     }
 
@@ -273,7 +151,7 @@ class DataGenerator implements CRUDTestCaseI, AssertsTransformerData
      */
     protected function numberOfEntitiesToGenerate()
     {
-        return $this->testCase->shouldReturnsStatus(Response::HTTP_NOT_FOUND) ? 1 : $this->testCase->entitiesNumber();
+        return $this->testCase->shouldReturnsStatus(Response::HTTP_NOT_FOUND) ? 1 : $this->entitiesNumber();
     }
 
     /**
@@ -293,14 +171,14 @@ class DataGenerator implements CRUDTestCaseI, AssertsTransformerData
      */
     protected function prepareEntityData()
     {
-        $entityData = $this->addTeamId($this->testCase->entityData(), $this->user->current_team_id);
+        $entityData = $this->addTeamId($this->entityData(), $this->user->current_team_id);
         $this->unsetExternalData($entityData);
         return $entityData;
     }
 
     private function createEntities(array $entityData)
     {
-        return factory($this->testCase->entityClass(), $this->numberOfEntitiesToGenerate())->create($entityData)->each(function ($entity) {
+        return factory($this->entityClass(), $this->numberOfEntitiesToGenerate())->create($entityData)->each(function ($entity) {
             $this->createIncludedData($this->getIdKey(), $entity);
             $this->createManyToManyRelatedData($entity);
         });
@@ -352,5 +230,11 @@ class DataGenerator implements CRUDTestCaseI, AssertsTransformerData
     public function ownedField()
     {
         return config('digitonic.api-test-suite.owned_class_field')->call($this);
+    }
+
+    public function __call($name, array $arguments)
+    {
+        $reflection = new \ReflectionMethod($this->testCase, $name);
+        return $reflection->invoke($this->testCase, $arguments);
     }
 }

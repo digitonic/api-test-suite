@@ -7,23 +7,19 @@ use Digitonic\ApiTestSuite\DataGenerator;
 trait AssertsTransformerData
 {
     /**
-     * @return bool
-     */
-    abstract protected function isListAction();
-
-    /**
      * @param array $data
      * @param $identifier
      * @param DataGenerator $dataGenerator
+     * @param $httpAction
      */
-    protected function checkTransformerData(array $data, $identifier, DataGenerator $dataGenerator)
+    protected function checkTransformerData(array $data, $identifier, DataGenerator $dataGenerator, $httpAction)
     {
-        if ($this->isListAction()) {
+        if ($this->isCollection($data)) {
             foreach ($data as $entity) {
-                $this->assertIndividualEntityTransformerData($entity, $identifier, $dataGenerator);
+                $this->assertIndividualEntityTransformerData($entity, $identifier, $dataGenerator, $httpAction);
             }
         } else {
-            $this->assertIndividualEntityTransformerData($data, $identifier, $dataGenerator);
+            $this->assertIndividualEntityTransformerData($data, $identifier, $dataGenerator, $httpAction);
         }
     }
 
@@ -31,11 +27,12 @@ trait AssertsTransformerData
      * @param $data
      * @param $identifier
      * @param DataGenerator $dataGenerator
+     * @param $httpAction
      */
-    protected function assertIndividualEntityTransformerData($data, $identifier, DataGenerator $dataGenerator)
+    protected function assertIndividualEntityTransformerData($data, $identifier, DataGenerator $dataGenerator, $httpAction)
     {
         $this->assertTransformerReplacesKeys(['id' => $identifier], $data);
-        $this->assertDataIsPresent($data, $dataGenerator);
+        $this->assertDataIsPresent($data, $dataGenerator, $httpAction);
         $this->assertTimestamps($data);
         $this->assertLinks($data, $identifier);
     }
@@ -57,10 +54,11 @@ trait AssertsTransformerData
     /**
      * @param array $data
      * @param DataGenerator $dataGenerator
+     * @param $httpAction
      */
-    protected function assertDataIsPresent(array $data, DataGenerator $dataGenerator)
+    protected function assertDataIsPresent(array $data, DataGenerator $dataGenerator, $httpAction)
     {
-        $expected = $this->httpAction() === 'put'
+        $expected = $httpAction === 'put'
             ? $dataGenerator->generateUpdateData($this->transformerData())
             : $this->transformerData();
 
@@ -100,5 +98,16 @@ trait AssertsTransformerData
                 $data['links']
             );
         }
+    }
+
+    protected function isCollection(array $data)
+    {
+        if (empty($data)){
+            return false;
+        }
+
+        return array_reduce($data, function($carry, $item){
+            return $carry && is_array($item);
+        }, true);
     }
 }

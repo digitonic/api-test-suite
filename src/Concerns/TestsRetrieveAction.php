@@ -39,7 +39,7 @@ trait TestsRetrieveAction
     /**
      * @return bool
      */
-    public function shouldPaginate()
+    public function shouldAssertPaginate()
     {
         return false;
     }

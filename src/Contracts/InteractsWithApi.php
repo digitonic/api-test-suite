@@ -7,6 +7,11 @@ use Illuminate\Foundation\Testing\TestResponse;
 interface InteractsWithApi
 {
     /**
+     * @return string
+     */
+    public function routeName();
+
+    /**
      * @param null $data
      * @param array $params
      * @param array $headers
@@ -38,4 +43,19 @@ interface InteractsWithApi
      * @return array
      */
     public function defaultHeaders();
+
+    /**
+     * @return array
+     */
+    public function jsonFields();
+
+    /**
+     * @return array
+     */
+    public function entityData();
+
+    /**
+     * @return string
+     */
+    public function httpAction();
 }

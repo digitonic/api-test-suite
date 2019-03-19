@@ -5,11 +5,13 @@ namespace Digitonic\ApiTestSuite;
 use Digitonic\ApiTestSuite\Concerns\AssertResponsePagination;
 use Digitonic\ApiTestSuite\Concerns\AssertsErrorFormat;
 use Digitonic\ApiTestSuite\Concerns\AssertsTransformerData;
+use Digitonic\ApiTestSuite\Concerns\DeterminesAssertions;
 use Digitonic\ApiTestSuite\Concerns\InteractsWithApi;
 use Digitonic\ApiTestSuite\Contracts\AssertResponsePagination as AssertResponsePaginationI;
 use Digitonic\ApiTestSuite\Contracts\AssertsErrorFormat as AssertsErrorFormatI;
 use Digitonic\ApiTestSuite\Contracts\AssertsTransformerData as AssertsTransformerDataI;
 use Digitonic\ApiTestSuite\Contracts\CRUDTestCase as CRUDTestCaseI;
+use Digitonic\ApiTestSuite\Contracts\DeterminesAssertions as DeterminesApiTestContextI;
 use Digitonic\ApiTestSuite\Contracts\InteractsWithApi as InteractsWithApiI;
 use Illuminate\Foundation\Testing\TestResponse;
 use Illuminate\Http\Response;
@@ -18,9 +20,11 @@ use Tests\TestCase;
 
 abstract class CRUDTestCase
     extends TestCase
-    implements CRUDTestCaseI, AssertsTransformerDataI, AssertsErrorFormatI, AssertResponsePaginationI, InteractsWithApiI
+    implements CRUDTestCaseI, AssertsTransformerDataI, AssertsErrorFormatI, AssertResponsePaginationI, InteractsWithApiI,
+    DeterminesApiTestContextI
 {
-    use AssertsTransformerData, InteractsWithApi, AssertsErrorFormat, AssertResponsePagination, InteractsWithApi;
+    use AssertsTransformerData, InteractsWithApi, AssertsErrorFormat, AssertResponsePagination, InteractsWithApi,
+        DeterminesAssertions;
 
     // TODO write a read.me with assumptions of the package about app structure
 
@@ -67,7 +71,7 @@ abstract class CRUDTestCase
 
     protected function assertCantUseRouteWithoutAuthenticating()
     {
-        if ($this->shouldReturnsStatus(Response::HTTP_UNAUTHORIZED)) {
+        if ($this->shouldAssertAuthentication()) {
             Auth::logout();
             /** @var TestResponse $response */
             $response = $this->doRequest([], [$this->dataGenerator->getIdentifier()]);
@@ -77,7 +81,7 @@ abstract class CRUDTestCase
 
     protected function assertNotFound()
     {
-        if ($this->shouldReturnsStatus(Response::HTTP_NOT_FOUND)) {
+        if ($this->shouldAssertNotFound()) {
             $response = $this->doAuthenticatedRequest(null, [$this->identifierGenerator->call($this)]);
             $this->assertErrorFormat($response, Response::HTTP_NOT_FOUND);
         }
@@ -85,7 +89,7 @@ abstract class CRUDTestCase
 
     protected function assertFailedValidationForRequiredFields()
     {
-        if ($this->shouldReturnsStatus(Response::HTTP_UNPROCESSABLE_ENTITY)) {
+        if ($this->shouldAssertValidation()) {
             foreach ($this->requiredFields() as $key) {
                 if (!isset($this->entityData()[$key])) {
                     $this->fail('The field ' . $key . ' is required');
@@ -95,9 +99,29 @@ abstract class CRUDTestCase
         }
     }
 
+    /**
+     * @param $data
+     * @param $key
+     * @param bool $assertValidationResponse
+     */
+    protected function assertRequiredField(array $data, $key, $assertValidationResponse)
+    {
+        unset($data[$key]);
+
+        /** @var TestResponse $response */
+        $response = $this->doAuthenticatedRequest($data, [$this->dataGenerator->getIdentifier()]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        if ($assertValidationResponse) {
+            $this->assertErrorFormat($response, Response::HTTP_UNPROCESSABLE_ENTITY, [
+                'fieldName' => $key,
+                'formattedFieldName' => str_replace('_', ' ', $key)
+            ]);
+        }
+    }
+
     protected function assertAccessIsForbidden()
     {
-        if ($this->shouldReturnsStatus(Response::HTTP_FORBIDDEN)) {
+        if ($this->shouldAssertForbiddenAction()) {
             $entity = $this->dataGenerator->generateEntityNotOwnedByUser();
             /** @var TestResponse $response */
             $response = $this->doRequest([], [$entity[$this->identifier->call($this)]]);
@@ -131,14 +155,15 @@ abstract class CRUDTestCase
      */
     protected function assertCreate()
     {
-        if ($this->shouldReturnsStatus(Response::HTTP_CREATED)) {
+        if ($this->shouldAssertCreation()) {
             /** @var TestResponse $response */
             $response = $this->doAuthenticatedRequest();
             $response->assertStatus(Response::HTTP_CREATED);
             $this->checkTransformerData(
                 $this->getResponseData($response),
                 $this->identifier->call($this),
-                $this->dataGenerator
+                $this->dataGenerator,
+                $this->httpAction()
             );
             $this->assertCreatedOnlyOnce();
         }
@@ -168,7 +193,7 @@ abstract class CRUDTestCase
 
     protected function assertUpdate()
     {
-        if ($this->shouldReturnsStatus(Response::HTTP_ACCEPTED)) {
+        if ($this->shouldAssertUpdate()) {
             $data = $this->dataGenerator->generateUpdateData($this->entityData());
             foreach (array_keys($this->includedData()) as $included) {
                 unset($data[$included]);
@@ -179,7 +204,8 @@ abstract class CRUDTestCase
             $this->checkTransformerData(
                 $this->getResponseData($response),
                 $this->identifier->call($this),
-                $this->dataGenerator
+                $this->dataGenerator,
+                $this->httpAction()
             );
             $this->assertCount(1, $this->entityClass()::where([
                 $this->identifier->call($this) => $this->dataGenerator->getIdentifier()
@@ -189,75 +215,50 @@ abstract class CRUDTestCase
 
     protected function assertRetrieve()
     {
-        if ($this->shouldReturnsStatus(Response::HTTP_OK) && !$this->isListAction()) {
+        if ($this->shouldAssertRetrieve($this->httpAction())) {
             $response = $this->doAuthenticatedRequest(null, [$this->dataGenerator->getIdentifier()]);
             $response->assertStatus(Response::HTTP_OK);
             $this->checkTransformerData(
                 $this->getResponseData($response),
                 $this->identifier->call($this),
-                $this->dataGenerator
+                $this->dataGenerator,
+                $this->httpAction()
             );
         }
     }
 
     protected function assertListAll()
     {
-        if ($this->shouldReturnsStatus(Response::HTTP_OK) && $this->isListAction()) {
-            $response = $this->doAuthenticatedRequest(null, [$this->dataGenerator->getIdentifier()]);
+        if ($this->shouldAssertListAll($this->httpAction())) {
+            $entitiesNumber = $this->entitiesNumber();
+            if ($this->shouldAssertPaginate()) {
+                $entitiesPerPage = $this->entitiesPerPage();
+                foreach([1 => $entitiesPerPage, 2 => ($entitiesNumber - $entitiesPerPage)] as $page=>$count){
+                    /** @var TestResponse $response */
+                    $response = $this->doAuthenticatedRequest(null, ['page' => $page, 'per_page' => $entitiesPerPage]);
+                    $this->assertPaginationFormat($response, $count, $entitiesNumber);
+                }
+            } else {
+                $response = $this->doAuthenticatedRequest(null);
+                $this->assertCount($entitiesNumber, $this->getResponseData($response));
+            }
             $response->assertStatus(Response::HTTP_OK);
             $this->checkTransformerData(
                 $this->getResponseData($response),
                 $this->identifier->call($this),
-                $this->dataGenerator
+                $this->dataGenerator,
+                $this->httpAction()
             );
-            $this->assertPagination($this->dataGenerator);
         }
     }
 
     protected function assertDelete()
     {
-        if ($this->shouldReturnsStatus(Response::HTTP_NO_CONTENT)) {
+        if ($this->shouldAssertDeletion()) {
             $response = $this->doAuthenticatedRequest(null, [$this->dataGenerator->getIdentifier()]);
             $response->assertStatus(Response::HTTP_NO_CONTENT);
             $this->assertEmpty($response->getContent());
             $this->assertNull($this->entityClass()::find($this->dataGenerator->entities->first()->id));
         }
-    }
-
-    /**
-     * @param $data
-     * @param $key
-     * @param bool $assertValidationResponse
-     */
-    protected function assertRequiredField(array $data, $key, $assertValidationResponse)
-    {
-        unset($data[$key]);
-
-        /** @var TestResponse $response */
-        $response = $this->doAuthenticatedRequest($data, [$this->dataGenerator->getIdentifier()]);
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-        if ($assertValidationResponse) {
-            $this->assertErrorFormat($response, Response::HTTP_UNPROCESSABLE_ENTITY, [
-                'fieldName' => $key,
-                'formattedFieldName' => str_replace('_', ' ', $key)
-            ]);
-        }
-    }
-
-    /**
-     * @return bool
-     */
-    protected function isListAction()
-    {
-        return !$this->shouldReturnsStatus(Response::HTTP_NOT_FOUND) && $this->httpAction() == 'get';
-    }
-
-    /**
-     * @param int $statusCode
-     * @return bool
-     */
-    public function shouldReturnsStatus($statusCode)
-    {
-        return collect($this->statusCodes())->contains($statusCode);
     }
 }
