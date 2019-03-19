@@ -2,9 +2,11 @@
 
 namespace Digitonic\ApiTestSuite;
 
+use Digitonic\ApiTestSuite\Concerns\AssertsErrorFormat;
 use Digitonic\ApiTestSuite\Concerns\AssertsTransformerData;
 use Digitonic\ApiTestSuite\Concerns\InteractsWithApi;
 use Digitonic\ApiTestSuite\Contracts\AssertsTransformerData as AssertsTransformerDataI;
+use Digitonic\ApiTestSuite\Contracts\AssertsErrorFormat as AssertsErrorFormatI;
 use Digitonic\ApiTestSuite\Contracts\CRUDTestCase as CRUDTestCaseI;
 use Illuminate\Foundation\Testing\TestResponse;
 use Illuminate\Http\Response;
@@ -12,42 +14,50 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
 use Tests\TestCase;
 
-abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTransformerDataI
+abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTransformerDataI, AssertsErrorFormatI
 {
-    use AssertsTransformerData, InteractsWithApi;
+    use AssertsTransformerData, InteractsWithApi, AssertsErrorFormat;
+
     // TODO write a read.me with assumptions of the package about app structure
 
     /**
      * @var array
      */
-    public $defaultHeaders;
+    public
+    $defaultHeaders;
 
     /**
      * float
      */
-    public $entitiesNumber;
+    public
+    $entitiesNumber;
 
     /**
      * float
      */
-    public $entitiesPerPage;
+    public
+    $entitiesPerPage;
 
     /**
      * @var \Closure
      */
-    public $identifier;
+    public
+    $identifier;
 
     /**
      * @var \Closure
      */
-    public $identifierGenerator;
+    public
+    $identifierGenerator;
 
     /**
      * @var DataGenerator
      */
-    public $dataGenerator;
+    public
+    $dataGenerator;
 
-    public function setUp(): void
+    public
+    function setUp(): void
     {
         parent::setUp();
         $this->defaultHeaders = config('digitonic.api-test-suite.default_headers');
@@ -61,7 +71,8 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
     /**
      * @throws \ReflectionException
      */
-    public function runBaseApiTestSuite()
+    public
+    function runBaseApiTestSuite()
     {
         $this->dataGenerator->generateEntities();
         $this->assertCantUseRouteWithoutAuthenticating();
@@ -76,7 +87,8 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
         $this->assertDelete();
     }
 
-    protected function assertCantUseRouteWithoutAuthenticating()
+    protected
+    function assertCantUseRouteWithoutAuthenticating()
     {
         if ($this->shouldReturnsStatus(Response::HTTP_UNAUTHORIZED)) {
             Auth::logout();
@@ -86,7 +98,8 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
         }
     }
 
-    protected function assertNotFound()
+    protected
+    function assertNotFound()
     {
         if ($this->shouldReturnsStatus(Response::HTTP_NOT_FOUND)) {
             $response = $this->doAuthenticatedRequest(null, [$this->identifierGenerator->call($this)]);
@@ -94,7 +107,8 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
         }
     }
 
-    protected function assertFailedValidationForRequiredFields()
+    protected
+    function assertFailedValidationForRequiredFields()
     {
         if ($this->shouldReturnsStatus(Response::HTTP_UNPROCESSABLE_ENTITY)) {
             foreach ($this->requiredFields() as $key) {
@@ -106,7 +120,8 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
         }
     }
 
-    protected function assertAccessIsForbidden()
+    protected
+    function assertAccessIsForbidden()
     {
         if ($this->shouldReturnsStatus(Response::HTTP_FORBIDDEN)) {
             $entity = $this->dataGenerator->generateEntityNotOwnedByUser();
@@ -116,7 +131,8 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
         }
     }
 
-    protected function assertRequiredHeaders()
+    protected
+    function assertRequiredHeaders()
     {
         foreach ($this->requiredHeaders() as $header => $value) {
             $headers = $this->requiredHeaders();
@@ -140,7 +156,8 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
     /**
      * @throws \ReflectionException
      */
-    protected function assertCreate()
+    protected
+    function assertCreate()
     {
         if ($this->shouldReturnsStatus(Response::HTTP_CREATED)) {
             /** @var TestResponse $response */
@@ -158,7 +175,8 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
     /**
      * @throws \ReflectionException
      */
-    protected function assertCreatedOnlyOnce()
+    protected
+    function assertCreatedOnlyOnce()
     {
         $this->doAuthenticatedRequest();
         $entityData = $this->entityData();
@@ -177,7 +195,8 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
         $this->assertCount(1, $this->entityClass()::where($entityData)->get());
     }
 
-    protected function assertUpdate()
+    protected
+    function assertUpdate()
     {
         if ($this->shouldReturnsStatus(Response::HTTP_ACCEPTED)) {
             $data = $this->dataGenerator->generateUpdateData($this->entityData());
@@ -198,7 +217,8 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
         }
     }
 
-    protected function assertRetrieve()
+    protected
+    function assertRetrieve()
     {
         if ($this->shouldReturnsStatus(Response::HTTP_OK) && !$this->isListAction()) {
             $response = $this->doAuthenticatedRequest(null, [$this->dataGenerator->getIdentifier()]);
@@ -211,7 +231,8 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
         }
     }
 
-    protected function assertListAll()
+    protected
+    function assertListAll()
     {
         if ($this->shouldReturnsStatus(Response::HTTP_OK) && $this->isListAction()) {
             $response = $this->doAuthenticatedRequest(null, [$this->dataGenerator->getIdentifier()]);
@@ -225,7 +246,8 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
         }
     }
 
-    protected function assertDelete()
+    protected
+    function assertDelete()
     {
         if ($this->shouldReturnsStatus(Response::HTTP_NO_CONTENT)) {
             $response = $this->doAuthenticatedRequest(null, [$this->dataGenerator->getIdentifier()]);
@@ -240,7 +262,8 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
      * @param $key
      * @param bool $assertValidationResponse
      */
-    protected function assertRequiredField(array $data, $key, $assertValidationResponse)
+    protected
+    function assertRequiredField(array $data, $key, $assertValidationResponse)
     {
         unset($data[$key]);
 
@@ -255,7 +278,8 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
         }
     }
 
-    protected function assertPagination()
+    protected
+    function assertPagination()
     {
         if ($this->shouldPaginate()) {
             // test page 1
@@ -283,7 +307,8 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
     /**
      * @return bool
      */
-    protected function isListAction()
+    protected
+    function isListAction()
     {
         return !$this->shouldReturnsStatus(Response::HTTP_NOT_FOUND) && $this->httpAction() == 'get';
     }
@@ -292,7 +317,8 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
      * @param int $statusCode
      * @return bool
      */
-    public function shouldReturnsStatus($statusCode)
+    public
+    function shouldReturnsStatus($statusCode)
     {
         return collect($this->statusCodes())->contains($statusCode);
     }
@@ -301,7 +327,8 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
      * @param TestResponse $response
      * @param $total
      */
-    protected function assertPaginationResponseStructure(TestResponse $response, $total)
+    protected
+    function assertPaginationResponseStructure(TestResponse $response, $total)
     {
         $this->assertRegExp(
             "/" . View::file(
@@ -309,25 +336,6 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
                 [
                     'total' => $total
                 ]
-            )->render() . "/",
-            $response->getContent()
-        );
-    }
-
-    /**
-     * The template used allows regular expressions, e.g. in the default 400.blade.php template
-     *
-     * @param TestResponse $response
-     * @param $status
-     * @param array $data
-     */
-    protected function assertErrorFormat(TestResponse $response, $status, $data = [])
-    {
-        $response->assertStatus($status);
-        $this->assertRegExp(
-            "/" . View::file(
-                config('digitonic.api-test-suite.templates.base_path') . 'errors/' . $status . '.blade.php',
-                $data
             )->render() . "/",
             $response->getContent()
         );
