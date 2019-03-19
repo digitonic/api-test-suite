@@ -12,7 +12,7 @@ trait AssertResponsePagination
      * @param $response
      * @param $expectedCount
      */
-    public function assertPaginationFormat(TestResponse $response, $expectedCount, $expectedTotal)
+    protected function assertPaginationFormat(TestResponse $response, $expectedCount, $expectedTotal)
     {
         $response->assertStatus(Response::HTTP_OK);
         $this->assertCount(
@@ -42,7 +42,7 @@ trait AssertResponsePagination
     /**
      * @return int
      */
-    public function entitiesPerPage()
+    protected function entitiesPerPage()
     {
         return config('digitonic.api-test-suite.entities_per_page');
     }
@@ -50,7 +50,7 @@ trait AssertResponsePagination
     /**
      * @return float
      */
-    public function entitiesNumber()
+    protected function entitiesNumber()
     {
         return 1.5 * $this->entitiesPerPage();
     }

@@ -12,9 +12,9 @@ trait InteractsWithApi
      * @param array $headers
      * @return TestResponse
      */
-    public function doAuthenticatedRequest($data = null, array $params = [], $headers = [])
+    protected function doAuthenticatedRequest($data = null, array $params = [], $headers = [])
     {
-        return $this->actingAs($this->dataGenerator->user)->doRequest($data, $params, $headers);
+        return $this->actingAs($this->user)->doRequest($data, $params, $headers);
     }
 
     /**
@@ -23,7 +23,7 @@ trait InteractsWithApi
      * @param array $headers
      * @return TestResponse
      */
-    public function doRequest($data = null, array $params = [], $headers = [])
+    protected function doRequest($data = null, array $params = [], $headers = [])
     {
         return $this->call(
             $this->httpAction(),
@@ -39,7 +39,7 @@ trait InteractsWithApi
      * @param TestResponse $response
      * @return array
      */
-    public function getResponseData(TestResponse $response)
+    protected function getResponseData(TestResponse $response)
     {
         $data = json_decode($response->getContent(), true)['data'];
 
@@ -54,7 +54,7 @@ trait InteractsWithApi
      * @param $entityData
      * @return array
      */
-    public function jsonEncodeDataFields($entityData)
+    protected function jsonEncodeDataFields($entityData)
     {
         foreach ($entityData as $key => $value) {
             if (in_array($key, $this->jsonFields())) {
@@ -64,7 +64,7 @@ trait InteractsWithApi
         return $entityData;
     }
 
-    public function defaultHeaders()
+    protected function defaultHeaders()
     {
         return config('digitonic.api-test-suite.default_headers');
     }

@@ -2,37 +2,33 @@
 
 namespace Digitonic\ApiTestSuite\Concerns;
 
-use Digitonic\ApiTestSuite\DataGenerator;
-
 trait AssertsTransformerData
 {
     /**
      * @param array $data
      * @param $identifier
-     * @param DataGenerator $dataGenerator
      * @param $httpAction
      */
-    protected function checkTransformerData(array $data, $identifier, DataGenerator $dataGenerator, $httpAction)
+    protected function checkTransformerData(array $data, $identifier, $httpAction)
     {
         if ($this->isCollection($data)) {
             foreach ($data as $entity) {
-                $this->assertIndividualEntityTransformerData($entity, $identifier, $dataGenerator, $httpAction);
+                $this->assertIndividualEntityTransformerData($entity, $identifier, $httpAction);
             }
         } else {
-            $this->assertIndividualEntityTransformerData($data, $identifier, $dataGenerator, $httpAction);
+            $this->assertIndividualEntityTransformerData($data, $identifier, $httpAction);
         }
     }
 
     /**
      * @param $data
      * @param $identifier
-     * @param DataGenerator $dataGenerator
      * @param $httpAction
      */
-    protected function assertIndividualEntityTransformerData($data, $identifier, DataGenerator $dataGenerator, $httpAction)
+    protected function assertIndividualEntityTransformerData($data, $identifier, $httpAction)
     {
         $this->assertTransformerReplacesKeys(['id' => $identifier], $data);
-        $this->assertDataIsPresent($data, $dataGenerator, $httpAction);
+        $this->assertDataIsPresent($data, $httpAction);
         $this->assertTimestamps($data);
         $this->assertLinks($data, $identifier);
     }
@@ -53,13 +49,12 @@ trait AssertsTransformerData
 
     /**
      * @param array $data
-     * @param DataGenerator $dataGenerator
      * @param $httpAction
      */
-    protected function assertDataIsPresent(array $data, DataGenerator $dataGenerator, $httpAction)
+    protected function assertDataIsPresent(array $data, $httpAction)
     {
         $expected = $httpAction === 'put'
-            ? $dataGenerator->generateUpdateData($this->transformerData())
+            ? $this->generateUpdateData($this->transformerData())
             : $this->transformerData();
 
         foreach (array_keys($this->includedData()) as $included) {

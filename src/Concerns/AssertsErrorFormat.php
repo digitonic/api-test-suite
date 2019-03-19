@@ -14,7 +14,7 @@ trait AssertsErrorFormat
      * @param $status
      * @param array $data
      */
-    public function assertErrorFormat(TestResponse $response, $status, $data = [])
+    protected function assertErrorFormat(TestResponse $response, $status, $data = [])
     {
         $response->assertStatus($status);
         $this->assertRegExp(

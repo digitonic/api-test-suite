@@ -10,7 +10,7 @@ trait DeterminesAssertions
      * @param $httpAction
      * @return bool
      */
-    public function isListAction($httpAction)
+    protected function isListAction($httpAction)
     {
         return !$this->shouldReturnsStatus(Response::HTTP_NOT_FOUND) && $httpAction == 'get';
     }
@@ -19,7 +19,7 @@ trait DeterminesAssertions
      * @param int $statusCode
      * @return bool
      */
-    public function shouldReturnsStatus($statusCode)
+    protected function shouldReturnsStatus($statusCode)
     {
         return collect($this->statusCodes())->contains($statusCode);
     }
@@ -27,7 +27,7 @@ trait DeterminesAssertions
     /**
      * @return bool
      */
-    public function shouldAssertAuthentication()
+    protected function shouldAssertAuthentication()
     {
         return $this->shouldReturnsStatus(Response::HTTP_UNAUTHORIZED);
     }
@@ -35,7 +35,7 @@ trait DeterminesAssertions
     /**
      * @return bool
      */
-    public function shouldAssertNotFound()
+    protected function shouldAssertNotFound()
     {
         return $this->shouldReturnsStatus(Response::HTTP_NOT_FOUND);
     }
@@ -43,7 +43,7 @@ trait DeterminesAssertions
     /**
      * @return bool
      */
-    public function shouldAssertValidation()
+    protected function shouldAssertValidation()
     {
         return $this->shouldReturnsStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
@@ -51,7 +51,7 @@ trait DeterminesAssertions
     /**
      * @return bool
      */
-    public function shouldAssertForbiddenAction()
+    protected function shouldAssertForbiddenAction()
     {
         return $this->shouldReturnsStatus(Response::HTTP_FORBIDDEN);
     }
@@ -59,7 +59,7 @@ trait DeterminesAssertions
     /**
      * @return bool
      */
-    public function shouldAssertCreation()
+    protected function shouldAssertCreation()
     {
         return $this->shouldReturnsStatus(Response::HTTP_CREATED);
     }
@@ -67,7 +67,7 @@ trait DeterminesAssertions
     /**
      * @return bool
      */
-    public function shouldAssertUpdate()
+    protected function shouldAssertUpdate()
     {
         return $this->shouldReturnsStatus(Response::HTTP_ACCEPTED);
     }
@@ -76,7 +76,7 @@ trait DeterminesAssertions
      * @param $httpAction
      * @return bool
      */
-    public function shouldAssertRetrieve($httpAction)
+    protected function shouldAssertRetrieve($httpAction)
     {
         return $this->shouldReturnsStatus(Response::HTTP_OK) && !$this->isListAction($httpAction);
     }
@@ -85,7 +85,7 @@ trait DeterminesAssertions
      * @param $httpAction
      * @return bool
      */
-    public function shouldAssertListAll($httpAction)
+    protected function shouldAssertListAll($httpAction)
     {
         return $this->shouldReturnsStatus(Response::HTTP_OK) && $this->isListAction($httpAction);
     }
@@ -93,7 +93,7 @@ trait DeterminesAssertions
     /**
      * @return bool
      */
-    public function shouldAssertDeletion()
+    protected function shouldAssertDeletion()
     {
         return $this->shouldReturnsStatus(Response::HTTP_NO_CONTENT);
     }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Digitonic\ApiTestSuite;
+namespace Digitonic\ApiTestSuite\Concerns;
 
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
@@ -9,28 +9,12 @@ use Illuminate\Support\Str;
 use Mdoc\Campaigns\Models\Campaign;
 use Mdoc\Users\Models\Team;
 
-class DataGenerator
+trait GeneratesTestData
 {
-    /**
-     * @var CRUDTestCase
-     */
-    private $testCase;
     /**
      * @var Collection
      */
     public $entities;
-
-    public $user;
-
-    protected $identifier;
-
-    public function __construct(CRUDTestCase $testCase)
-    {
-        $this->testCase = $testCase;
-        $this->entities = new Collection();
-        $this->user = factory(config('digitonic.api-test-suite.api_user_class'))->state('crud')->create();
-        $this->identifier = $testCase->identifier;
-    }
 
     public function generateEntities()
     {
@@ -151,7 +135,7 @@ class DataGenerator
      */
     protected function numberOfEntitiesToGenerate()
     {
-        return $this->testCase->shouldReturnsStatus(Response::HTTP_NOT_FOUND) ? 1 : $this->entitiesNumber();
+        return $this->shouldReturnsStatus(Response::HTTP_NOT_FOUND) ? 1 : $this->entitiesNumber();
     }
 
     /**
@@ -230,11 +214,5 @@ class DataGenerator
     public function ownedField()
     {
         return config('digitonic.api-test-suite.owned_class_field')->call($this);
-    }
-
-    public function __call($name, array $arguments)
-    {
-        $reflection = new \ReflectionMethod($this->testCase, $name);
-        return $reflection->invoke($this->testCase, $arguments);
     }
 }
