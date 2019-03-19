@@ -23,9 +23,4 @@ interface AssertsTransformerData
      * @return array
      */
     public function transformerData();
-
-    /**
-     * @return array
-     */
-    public function includedData();
 }

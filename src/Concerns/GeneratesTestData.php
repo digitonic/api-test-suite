@@ -2,7 +2,6 @@
 
 namespace Digitonic\ApiTestSuite\Concerns;
 
-use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -16,30 +15,46 @@ trait GeneratesTestData
      */
     public $entities;
 
-    public function generateEntities()
+    protected function generateEntities($numberOfEntities)
     {
         // todo get rid of teams
-        if (in_array($this->httpAction(), ['put', 'get', 'delete'])) {
+        $entityData = $this->prepareEntityData();
+        $this->entities = $this->createEntities($entityData, $numberOfEntities);
+
+        if ($numberOfEntities == $this->entitiesNumber() && $this->ownedClass()) {
+            $team2 = $this->addTeamToUser();
             $entityData = $this->prepareEntityData();
-            $this->entities = $this->createEntities($entityData);
 
-            if ($this->numberOfEntitiesToGenerate() == $this->entitiesNumber() && $this->ownedClass()) {
-                $team2 = $this->addTeamToUser();
-                $entityData = $this->prepareEntityData();
-
-                if ($this->ownedClass() === Team::class) {
-                    $newOwningEntity = $team2;
-                    $identifier = 'id';
-                } else {
-                    $identifier = $this->identifier->call($this);
-                    $newOwningEntity = factory($this->ownedClass())->create();
-                }
-
-                $entityData[$this->ownedField()] = $newOwningEntity->$identifier;
-
-                $this->createEntities($entityData);
+            if ($this->ownedClass() === Team::class) {
+                $newOwningEntity = $team2;
+                $identifier = 'id';
+            } else {
+                $identifier = $this->identifier();
+                $newOwningEntity = factory($this->ownedClass())->create();
             }
+
+            $entityData[$this->ownedField()] = $newOwningEntity->$identifier;
+
+            $this->createEntities($entityData, 1);
         }
+    }
+
+    /**
+     * @return array
+     */
+    protected function prepareEntityData()
+    {
+        $entityData = $this->addTeamId($this->entityData(), $this->user->current_team_id);
+        $this->unsetExternalData($entityData);
+        return $entityData;
+    }
+
+    protected function createEntities(array $entityData, $numberOfEntities)
+    {
+        return factory($this->entityClass(), $numberOfEntities)->create($entityData)->each(function ($entity) {
+            $this->createIncludedData($this->getIdKey(), $entity);
+            $this->createManyToManyRelatedData($entity);
+        });
     }
 
     /**
@@ -52,37 +67,6 @@ trait GeneratesTestData
         return $this->schemaHasAttribute('team_id')
             ? array_merge($entityData, ['team_id' => $teamId])
             : $entityData;
-    }
-
-    /**
-     * @param string $attribute
-     * @return mixed
-     */
-    protected function schemaHasAttribute(string $attribute)
-    {
-        $class = $this->entityClass();
-
-        return Schema::hasColumn((new $class)->getTable(), $attribute);
-    }
-
-    /**
-     * @param $entityData
-     * @return array
-     * @throws \ReflectionException
-     */
-    public function modifyCommentable(&$entityData)
-    {
-        $reflection = new \ReflectionClass($this->entityClass());
-
-        // TODO this should be made more flexible to accommodate other types if required
-        if ($reflection->hasMethod('commentable')) {
-            $entityData['commentable_id']
-                = Campaign::where($this->identifier->call($this), $entityData['campaign_' . $this->identifier->call($this)])->first()->id;
-            $entityData['commentable_type'] = $entityData['type'];
-            unset($entityData['campaign_' . $this->identifier->call($this)]);
-            unset($entityData['type']);
-        }
-        return $entityData;
     }
 
     /**
@@ -100,18 +84,24 @@ trait GeneratesTestData
         }
     }
 
-    private function createIncludedData($idKey, $entity)
+    protected function createIncludedData($idKey, $entity)
     {
         foreach ($this->includedData() as $key => $class) {
             factory($class)->create(array_merge($this->entityData()[$key], [$idKey => $entity->id]));
         }
     }
 
+    protected function getIdKey()
+    {
+        $idKey = explode('\\', $this->entityClass());
+        return strtolower(array_last($idKey)) . '_id';
+    }
+
     /**
      * @param $entity
      * @param $this
      */
-    private function createManyToManyRelatedData($entity)
+    protected function createManyToManyRelatedData($entity)
     {
         foreach ($this->manyToManyRelationships() as $class => $attribute) {
             foreach ($this->entityData()[$attribute] as $id) {
@@ -124,18 +114,35 @@ trait GeneratesTestData
         }
     }
 
-    private function getIdKey()
+    /**
+     * @param string $attribute
+     * @return bool
+     */
+    protected function schemaHasAttribute($attribute)
     {
-        $idKey = explode('\\', $this->entityClass());
-        return strtolower(array_last($idKey)) . '_id';
+        $class = $this->entityClass();
+
+        return Schema::hasColumn((new $class)->getTable(), $attribute);
     }
 
     /**
-     * @return int
+     * @param $entityData
+     * @return array
+     * @throws \ReflectionException
      */
-    protected function numberOfEntitiesToGenerate()
+    protected function modifyCommentable(&$entityData)
     {
-        return $this->shouldReturnsStatus(Response::HTTP_NOT_FOUND) ? 1 : $this->entitiesNumber();
+        $reflection = new \ReflectionClass($this->entityClass());
+
+        // TODO this should be made more flexible to accommodate other types if required
+        if ($reflection->hasMethod('commentable')) {
+            $entityData['commentable_id']
+                = Campaign::where($this->identifier(), $entityData['campaign_' . $this->identifier()])->first()->id;
+            $entityData['commentable_type'] = $entityData['type'];
+            unset($entityData['campaign_' . $this->identifier()]);
+            unset($entityData['type']);
+        }
+        return $entityData;
     }
 
     /**
@@ -150,25 +157,7 @@ trait GeneratesTestData
         return $team2;
     }
 
-    /**
-     * @return array
-     */
-    protected function prepareEntityData()
-    {
-        $entityData = $this->addTeamId($this->entityData(), $this->user->current_team_id);
-        $this->unsetExternalData($entityData);
-        return $entityData;
-    }
-
-    private function createEntities(array $entityData)
-    {
-        return factory($this->entityClass(), $this->numberOfEntitiesToGenerate())->create($entityData)->each(function ($entity) {
-            $this->createIncludedData($this->getIdKey(), $entity);
-            $this->createManyToManyRelatedData($entity);
-        });
-    }
-
-    public function generateEntityNotOwnedByUser()
+    protected function generateEntityNotOwnedByUser()
     {
         $data = $this->entityData();
         $data[$this->ownedField()] = 100000000; // todo make generator
@@ -184,10 +173,10 @@ trait GeneratesTestData
     /**
      * @return array
      */
-    public function generateUpdateData($data)
+    protected function generateUpdateData($data)
     {
         foreach ($data as $key => $datum) {
-            if (strpos($key, $this->identifier->call($this)) === false) {
+            if (strpos($key, $this->identifier()) === false) {
                 if (is_array($datum)) {
                     $data[$key] = $this->generateUpdateData($datum);
                 } else {
@@ -205,14 +194,19 @@ trait GeneratesTestData
     /**
      * @return string|null
      */
-    public function getIdentifier()
+    protected function getCurrentIdentifier()
     {
-        $identifier = $this->identifier->call($this);
+        $identifier = $this->identifier();
         return $this->entities->isEmpty() ? null : $this->entities->first()->$identifier;
     }
 
-    public function ownedField()
+    protected function ownedField()
     {
         return config('digitonic.api-test-suite.owned_class_field')->call($this);
+    }
+
+    protected function identifier()
+    {
+        return config('digitonic.api-test-suite.identifier_field')->call($this);
     }
 }

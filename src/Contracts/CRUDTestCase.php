@@ -13,14 +13,4 @@ interface CRUDTestCase
      * @return array
      */
     public function requiredHeaders();
-
-    /**
-     * @return string
-     */
-    public function entityClass();
-
-    /**
-     * @return array
-     */
-    public function manyToManyRelationships();
 }

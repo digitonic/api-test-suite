@@ -15,11 +15,6 @@ interface InteractsWithApi
     public function jsonFields();
 
     /**
-     * @return array
-     */
-    public function entityData();
-
-    /**
      * @return string
      */
     public function httpAction();

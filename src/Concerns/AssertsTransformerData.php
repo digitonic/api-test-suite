@@ -8,15 +8,16 @@ trait AssertsTransformerData
      * @param array $data
      * @param $identifier
      * @param $httpAction
+     * @param $included
      */
-    protected function checkTransformerData(array $data, $identifier, $httpAction)
+    protected function checkTransformerData(array $data, $identifier, $httpAction, $included)
     {
         if ($this->isCollection($data)) {
             foreach ($data as $entity) {
-                $this->assertIndividualEntityTransformerData($entity, $identifier, $httpAction);
+                $this->assertIndividualEntityTransformerData($entity, $identifier, $httpAction, $included);
             }
         } else {
-            $this->assertIndividualEntityTransformerData($data, $identifier, $httpAction);
+            $this->assertIndividualEntityTransformerData($data, $identifier, $httpAction, $included);
         }
     }
 
@@ -24,11 +25,12 @@ trait AssertsTransformerData
      * @param $data
      * @param $identifier
      * @param $httpAction
+     * @param $included
      */
-    protected function assertIndividualEntityTransformerData($data, $identifier, $httpAction)
+    protected function assertIndividualEntityTransformerData($data, $identifier, $httpAction, $included)
     {
         $this->assertTransformerReplacesKeys(['id' => $identifier], $data);
-        $this->assertDataIsPresent($data, $httpAction);
+        $this->assertDataIsPresent($data, $httpAction, $included);
         $this->assertTimestamps($data);
         $this->assertLinks($data, $identifier);
     }
@@ -50,14 +52,15 @@ trait AssertsTransformerData
     /**
      * @param array $data
      * @param $httpAction
+     * @param $includedData
      */
-    protected function assertDataIsPresent(array $data, $httpAction)
+    protected function assertDataIsPresent(array $data, $httpAction, $includedData)
     {
         $expected = $httpAction === 'put'
             ? $this->generateUpdateData($this->transformerData())
             : $this->transformerData();
 
-        foreach (array_keys($this->includedData()) as $included) {
+        foreach (array_keys($includedData) as $included) {
             $expected[$included] = ['data' => $expected[$included]];
         }
 

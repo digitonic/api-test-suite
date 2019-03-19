@@ -12,23 +12,23 @@ trait InteractsWithApi
      * @param array $headers
      * @return TestResponse
      */
-    protected function doAuthenticatedRequest($data = null, array $params = [], $headers = [])
+    protected function doAuthenticatedRequest($data, array $params = [], $headers = [])
     {
         return $this->actingAs($this->user)->doRequest($data, $params, $headers);
     }
 
     /**
-     * @param null $data
+     * @param array $data
      * @param array $params
      * @param array $headers
      * @return TestResponse
      */
-    protected function doRequest($data = null, array $params = [], $headers = [])
+    protected function doRequest($data, array $params = [], $headers = [])
     {
         return $this->call(
             $this->httpAction(),
             route($this->routeName(), $params),
-            $data ?? $this->entityData(),
+            $data,
             [],
             [],
             empty($headers) ? $this->defaultHeaders() : $headers
