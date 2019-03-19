@@ -10,7 +10,7 @@ trait TestsUpdateAction
     /**
      * @return array
      */
-    protected function requiredFields()
+    public function requiredFields()
     {
         return [];
     }
@@ -18,7 +18,7 @@ trait TestsUpdateAction
     /**
      * @return string
      */
-    protected function httpAction()
+    public function httpAction()
     {
         return 'put';
     }
@@ -26,7 +26,7 @@ trait TestsUpdateAction
     /**
      * @return array
      */
-    protected function statusCodes()
+    public function statusCodes()
     {
         return [
             Response::HTTP_ACCEPTED,
@@ -40,7 +40,7 @@ trait TestsUpdateAction
     /**
      * @return bool
      */
-    protected function shouldPaginate()
+    public function shouldPaginate()
     {
         return false;
     }
@@ -48,7 +48,7 @@ trait TestsUpdateAction
     /**
      * @return array
      */
-    protected function requiredHeaders()
+    public function requiredHeaders()
     {
         return array_merge($this->defaultHeaders, []);
     }

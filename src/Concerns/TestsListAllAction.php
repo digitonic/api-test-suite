@@ -9,7 +9,7 @@ trait TestsListAllAction
     /**
      * @return array
      */
-    protected function requiredFields()
+    public function requiredFields()
     {
         return [];
     }
@@ -17,7 +17,7 @@ trait TestsListAllAction
     /**
      * @return string
      */
-    protected function httpAction()
+    public function httpAction()
     {
         return 'get';
     }
@@ -25,7 +25,7 @@ trait TestsListAllAction
     /**
      * @return array
      */
-    protected function statusCodes()
+    public function statusCodes()
     {
         return [
             Response::HTTP_UNAUTHORIZED,
@@ -36,7 +36,7 @@ trait TestsListAllAction
     /**
      * @return bool
      */
-    protected function shouldPaginate()
+    public function shouldPaginate()
     {
         return true;
     }
@@ -44,7 +44,7 @@ trait TestsListAllAction
     /**
      * @return array
      */
-    protected function requiredHeaders()
+    public function requiredHeaders()
     {
         return array_merge($this->defaultHeaders, []);
     }

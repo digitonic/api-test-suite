@@ -9,7 +9,7 @@ trait TestsCreateAction
     /**
      * @return string
      */
-    protected function httpAction()
+    public function httpAction()
     {
         return 'post';
     }
@@ -17,7 +17,7 @@ trait TestsCreateAction
     /**
      * @return array
      */
-    protected function statusCodes()
+    public function statusCodes()
     {
         return [
             Response::HTTP_CREATED,
@@ -29,7 +29,7 @@ trait TestsCreateAction
     /**
      * @return bool
      */
-    protected function shouldPaginate()
+    public function shouldPaginate()
     {
         return false;
     }
@@ -37,7 +37,7 @@ trait TestsCreateAction
     /**
      * @return array
      */
-    protected function requiredHeaders()
+    public function requiredHeaders()
     {
         return array_merge($this->defaultHeaders, []);
     }
