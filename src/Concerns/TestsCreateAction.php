@@ -39,6 +39,6 @@ trait TestsCreateAction
      */
     public function requiredHeaders()
     {
-        return array_merge($this->defaultHeaders, []);
+        return array_merge($this->defaultHeaders(), []);
     }
 }

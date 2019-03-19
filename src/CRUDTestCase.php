@@ -10,6 +10,7 @@ use Digitonic\ApiTestSuite\Contracts\AssertResponsePagination as AssertResponseP
 use Digitonic\ApiTestSuite\Contracts\AssertsErrorFormat as AssertsErrorFormatI;
 use Digitonic\ApiTestSuite\Contracts\AssertsTransformerData as AssertsTransformerDataI;
 use Digitonic\ApiTestSuite\Contracts\CRUDTestCase as CRUDTestCaseI;
+use Digitonic\ApiTestSuite\Contracts\InteractsWithApi as InteractsWithApiI;
 use Illuminate\Foundation\Testing\TestResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -17,16 +18,11 @@ use Tests\TestCase;
 
 abstract class CRUDTestCase
     extends TestCase
-    implements CRUDTestCaseI, AssertsTransformerDataI, AssertsErrorFormatI, AssertResponsePaginationI
+    implements CRUDTestCaseI, AssertsTransformerDataI, AssertsErrorFormatI, AssertResponsePaginationI, InteractsWithApiI
 {
-    use AssertsTransformerData, InteractsWithApi, AssertsErrorFormat, AssertResponsePagination;
+    use AssertsTransformerData, InteractsWithApi, AssertsErrorFormat, AssertResponsePagination, InteractsWithApi;
 
     // TODO write a read.me with assumptions of the package about app structure
-
-    /**
-     * @var array
-     */
-    public $defaultHeaders;
 
     /**
      * @var \Closure
@@ -46,7 +42,6 @@ abstract class CRUDTestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->defaultHeaders = config('digitonic.api-test-suite.default_headers');
         $this->identifier = config('digitonic.api-test-suite.identifier_field');
         $this->identifierGenerator = config('digitonic.api-test-suite.identifier_faker');
         $this->dataGenerator = new DataGenerator($this);
