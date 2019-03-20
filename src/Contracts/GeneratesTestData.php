@@ -12,12 +12,12 @@ interface GeneratesTestData
     /**
      * @return string|null
      */
-    public function ownedClass();
+    public function authorizingClass();
 
     /**
      * @return array
      */
-    public function entityData();
+    public function payload();
 
     /**
      * @return array
@@ -32,5 +32,5 @@ interface GeneratesTestData
     /**
      * @return string
      */
-    public function entityClass();
+    public function resourceClass();
 }

@@ -2,15 +2,15 @@
 
 namespace Digitonic\ApiTestSuite;
 
-use Digitonic\ApiTestSuite\Concerns\AssertResponsePagination;
+use Digitonic\ApiTestSuite\Concerns\AssertPagination;
 use Digitonic\ApiTestSuite\Concerns\AssertsErrorFormat;
-use Digitonic\ApiTestSuite\Concerns\AssertsTransformerData;
+use Digitonic\ApiTestSuite\Concerns\AssertsOutput;
 use Digitonic\ApiTestSuite\Concerns\DeterminesAssertions;
 use Digitonic\ApiTestSuite\Concerns\GeneratesTestData;
 use Digitonic\ApiTestSuite\Concerns\InteractsWithApi;
-use Digitonic\ApiTestSuite\Contracts\AssertsTransformerData as AssertsTransformerDataI;
+use Digitonic\ApiTestSuite\Contracts\AssertsOutput as AssertsOutputI;
 use Digitonic\ApiTestSuite\Contracts\CRUDTestCase as CRUDTestCaseI;
-use Digitonic\ApiTestSuite\Contracts\DeterminesAssertions as DeterminesApiTestContextI;
+use Digitonic\ApiTestSuite\Contracts\DeterminesAssertions as DeterminesAssertionsI;
 use Digitonic\ApiTestSuite\Contracts\InteractsWithApi as InteractsWithApiI;
 use Illuminate\Foundation\Testing\TestResponse;
 use Illuminate\Http\Response;
@@ -18,9 +18,9 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
 
-abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTransformerDataI, InteractsWithApiI, DeterminesApiTestContextI
+abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOutputI, InteractsWithApiI, DeterminesAssertionsI
 {
-    use AssertsTransformerData, InteractsWithApi, AssertsErrorFormat, AssertResponsePagination, InteractsWithApi,
+    use AssertsOutput, InteractsWithApi, AssertsErrorFormat, AssertPagination, InteractsWithApi,
         DeterminesAssertions, GeneratesTestData;
 
     // TODO write a read.me with assumptions of the package about app structure
@@ -74,7 +74,7 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
     protected function assertNotFound()
     {
         if ($this->shouldAssertNotFound()) {
-            $response = $this->doAuthenticatedRequest($this->entityData(), [$this->identifierGenerator->call($this)]);
+            $response = $this->doAuthenticatedRequest($this->payload(), [$this->identifierGenerator->call($this)]);
             $this->assertErrorFormat($response, Response::HTTP_NOT_FOUND);
         }
     }
@@ -83,10 +83,10 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
     {
         if ($this->shouldAssertValidation()) {
             foreach ($this->requiredFields() as $key) {
-                if (!isset($this->entityData()[$key])) {
+                if (!isset($this->payload()[$key])) {
                     $this->fail('The field ' . $key . ' is required');
                 }
-                $this->assertRequiredField($this->entityData(), $key, !is_array($this->entityData()[$key]));
+                $this->assertRequiredField($this->payload(), $key, !is_array($this->payload()[$key]));
             }
         }
     }
@@ -131,12 +131,12 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
             if (empty($headers)) {
                 $headers['not_empty'] = 'not_empty';
             }
-            $response = $this->doAuthenticatedRequest($this->entityData(), [$this->getCurrentIdentifier()], $headers);
+            $response = $this->doAuthenticatedRequest($this->payload(), [$this->getCurrentIdentifier()], $headers);
             $this->assertErrorFormat($response, Response::HTTP_BAD_REQUEST, []);
 
             if ($value) {
                 $headers[$header] = '123456789';
-                $response = $this->doAuthenticatedRequest($this->entityData(), [$this->getCurrentIdentifier()], $headers);
+                $response = $this->doAuthenticatedRequest($this->payload(), [$this->getCurrentIdentifier()], $headers);
                 $this->assertErrorFormat($response, Response::HTTP_BAD_REQUEST);
             }
         }
@@ -149,7 +149,7 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
     {
         if ($this->shouldAssertCreation()) {
             /** @var TestResponse $response */
-            $response = $this->doAuthenticatedRequest($this->entityData());
+            $response = $this->doAuthenticatedRequest($this->payload());
             $response->assertStatus(Response::HTTP_CREATED);
             $this->checkTransformerData(
                 $this->getResponseData($response),
@@ -166,27 +166,27 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
      */
     protected function assertCreatedOnlyOnce()
     {
-        $this->doAuthenticatedRequest($this->entityData());
-        $entityData = $this->entityData();
-        $entityData = $this->jsonEncodeDataFields($entityData);
-        foreach ($entityData as $key => $item) {
+        $payload = $this->payload();
+        $this->doAuthenticatedRequest($payload);
+        $payload = $this->jsonEncodeDataFields($payload);
+        foreach ($payload as $key => $item) {
             if (in_array($key, array_keys($this->includedData()))) {
-                unset($entityData[$key]);
+                unset($payload[$key]);
             }
         }
 
         foreach ($this->manyToManyRelationships() as $attribute) {
-            unset($entityData[$attribute]);
+            unset($payload[$attribute]);
         }
 
-        $this->modifyCommentable($entityData);
-        $this->assertCount(1, $this->entityClass()::where($entityData)->get());
+        $this->modifyCommentable($payload);
+        $this->assertCount(1, $this->resourceClass()::where($payload)->get());
     }
 
     protected function assertUpdate()
     {
         if ($this->shouldAssertUpdate()) {
-            $data = $this->generateUpdateData($this->entityData());
+            $data = $this->generateUpdateData($this->payload());
             foreach (array_keys($this->includedData()) as $included) {
                 unset($data[$included]);
             }
@@ -199,7 +199,7 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
                 $this->httpAction(),
                 $this->includedData()
             );
-            $this->assertCount(1, $this->entityClass()::where([
+            $this->assertCount(1, $this->resourceClass()::where([
                 $this->identifier() => $this->getCurrentIdentifier()
             ])->get());
         }
@@ -208,7 +208,7 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
     protected function assertRetrieve()
     {
         if ($this->shouldAssertRetrieve($this->httpAction())) {
-            $response = $this->doAuthenticatedRequest($this->entityData(), [$this->getCurrentIdentifier()]);
+            $response = $this->doAuthenticatedRequest($this->payload(), [$this->getCurrentIdentifier()]);
             $response->assertStatus(Response::HTTP_OK);
             $this->checkTransformerData(
                 $this->getResponseData($response),
@@ -227,11 +227,11 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
                 $entitiesPerPage = $this->entitiesPerPage();
                 foreach ([1 => $entitiesPerPage, 2 => ($entitiesNumber - $entitiesPerPage)] as $page => $count) {
                     /** @var TestResponse $response */
-                    $response = $this->doAuthenticatedRequest($this->entityData(), ['page' => $page, 'per_page' => $entitiesPerPage]);
+                    $response = $this->doAuthenticatedRequest($this->payload(), ['page' => $page, 'per_page' => $entitiesPerPage]);
                     $this->assertPaginationFormat($response, $count, $entitiesNumber);
                 }
             } else {
-                $response = $this->doAuthenticatedRequest($this->entityData());
+                $response = $this->doAuthenticatedRequest($this->payload());
                 $this->assertCount($entitiesNumber, $this->getResponseData($response));
             }
             $response->assertStatus(Response::HTTP_OK);
@@ -247,10 +247,10 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsTr
     protected function assertDelete()
     {
         if ($this->shouldAssertDeletion()) {
-            $response = $this->doAuthenticatedRequest($this->entityData(), [$this->getCurrentIdentifier()]);
+            $response = $this->doAuthenticatedRequest($this->payload(), [$this->getCurrentIdentifier()]);
             $response->assertStatus(Response::HTTP_NO_CONTENT);
             $this->assertEmpty($response->getContent());
-            $this->assertNull($this->entityClass()::find($this->entities->first()->id));
+            $this->assertNull($this->resourceClass()::find($this->entities->first()->id));
         }
     }
 }

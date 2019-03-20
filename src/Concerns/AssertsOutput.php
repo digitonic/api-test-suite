@@ -2,7 +2,7 @@
 
 namespace Digitonic\ApiTestSuite\Concerns;
 
-trait AssertsTransformerData
+trait AssertsOutput
 {
     /**
      * @param array $data
@@ -41,7 +41,7 @@ trait AssertsTransformerData
      */
     protected function assertTransformerReplacesKeys(array $replacements, array $data)
     {
-        if ($this->ownedClass()) {
+        if ($this->authorizingClass()) {
             foreach ($replacements as $original => $substitute) {
                 $this->assertArrayNotHasKey($original, $data);
                 $this->assertArrayHasKey($substitute, $data);
@@ -57,8 +57,8 @@ trait AssertsTransformerData
     protected function assertDataIsPresent(array $data, $httpAction, $includedData)
     {
         $expected = $httpAction === 'put'
-            ? $this->generateUpdateData($this->transformerData())
-            : $this->transformerData();
+            ? $this->generateUpdateData($this->expectedResourceData())
+            : $this->expectedResourceData();
 
         foreach (array_keys($includedData) as $included) {
             $expected[$included] = ['data' => $expected[$included]];
@@ -75,7 +75,7 @@ trait AssertsTransformerData
      */
     protected function assertTimestamps(array $data)
     {
-        if ($this->entityHasTimestamps()) {
+        if ($this->expectsTimestamps()) {
             $this->assertArrayHasKey('created_at', $data);
             $this->assertArrayHasKey('updated_at', $data);
         }
@@ -87,7 +87,7 @@ trait AssertsTransformerData
      */
     protected function assertLinks(array $data, $identifier)
     {
-        foreach ($this->requiredLinks() as $rel => $routeName) {
+        foreach ($this->expectedLinks() as $rel => $routeName) {
             $this->assertContains(
                 [
                     'rel' => $rel,

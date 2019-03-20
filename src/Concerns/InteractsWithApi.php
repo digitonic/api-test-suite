@@ -51,17 +51,17 @@ trait InteractsWithApi
     }
 
     /**
-     * @param $entityData
+     * @param $payload
      * @return array
      */
-    protected function jsonEncodeDataFields($entityData)
+    protected function jsonEncodeDataFields($payload)
     {
-        foreach ($entityData as $key => $value) {
+        foreach ($payload as $key => $value) {
             if (in_array($key, $this->jsonFields())) {
-                $entityData[$key] = json_encode($value);
+                $payload[$key] = json_encode($value);
             }
         }
-        return $entityData;
+        return $payload;
     }
 
     protected function defaultHeaders()

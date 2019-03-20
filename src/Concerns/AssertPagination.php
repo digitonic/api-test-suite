@@ -6,7 +6,7 @@ use Illuminate\Foundation\Testing\TestResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\View;
 
-trait AssertResponsePagination
+trait AssertPagination
 {
     /**
      * @param $response
