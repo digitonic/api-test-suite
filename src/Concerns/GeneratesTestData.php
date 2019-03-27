@@ -115,7 +115,7 @@ trait GeneratesTestData
         if (is_string($this->createResource())) {
             return $this->generateEntityOverApi($payload, $user);
         } else {
-            return $this->createResource()->call($this, ['payload' => $payload]);
+            return $this->createResource()->call($this, ['payload' => $payload, 'user' => $user]);
         }
     }
 }

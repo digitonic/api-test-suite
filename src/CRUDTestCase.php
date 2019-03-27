@@ -12,12 +12,13 @@ use Digitonic\ApiTestSuite\Contracts\AssertsOutput as AssertsOutputI;
 use Digitonic\ApiTestSuite\Contracts\CRUDTestCase as CRUDTestCaseI;
 use Digitonic\ApiTestSuite\Contracts\DeterminesAssertions as DeterminesAssertionsI;
 use Digitonic\ApiTestSuite\Contracts\InteractsWithApi as InteractsWithApiI;
+use Digitonic\ApiTestSuite\Contracts\GeneratesTestData as GeneratesTestDataI;
 use Illuminate\Foundation\Testing\TestResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Tests\TestCase;
 
-abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOutputI, InteractsWithApiI, DeterminesAssertionsI
+abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOutputI, InteractsWithApiI, DeterminesAssertionsI, GeneratesTestDataI
 {
     use AssertsOutput, InteractsWithApi, AssertsErrorFormat, AssertPagination, InteractsWithApi,
         DeterminesAssertions, GeneratesTestData;
@@ -147,7 +148,7 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
     {
         if ($this->shouldAssertCreation()) {
             /** @var TestResponse $response */
-            $response = $this->doAuthenticatedRequest($this->payload);
+            $response = $this->doAuthenticatedRequest($this->payload, [$this->getCurrentIdentifier()]);
             $response->assertStatus(Response::HTTP_CREATED);
             $this->checkTransformerData(
                 $this->getResponseData($response),
@@ -162,7 +163,7 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
      */
     protected function assertCreatedOnlyOnce()
     {
-        $this->doAuthenticatedRequest($this->payload);
+        $this->doAuthenticatedRequest($this->payload, [$this->getCurrentIdentifier()]);
         $this->assertCount(1, $this->resourceClass()::all());
     }
 

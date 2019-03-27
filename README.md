@@ -1,0 +1,5 @@
+- factories
+- configuration
+- templates
+- creation rules
+- other assumptions
