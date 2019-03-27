@@ -6,6 +6,8 @@ use Illuminate\Foundation\Testing\TestResponse;
 
 trait InteractsWithApi
 {
+    public $user;
+
     /**
      * @param null $data
      * @param array $params
@@ -14,7 +16,7 @@ trait InteractsWithApi
      */
     protected function doAuthenticatedRequest($data, array $params = [], $headers = [])
     {
-        return $this->actingAs($this->user)->doRequest($data, $params, $headers);
+        return $this->actingAs($this->user, 'api')->doRequest($data, $params, $headers);
     }
 
     /**
@@ -41,27 +43,13 @@ trait InteractsWithApi
      */
     protected function getResponseData(TestResponse $response)
     {
-        $data = json_decode($response->getContent(), true)['data'];
+        $data = json_decode($response->getContent(), true);
 
-        if (empty($data)) {
+        if (empty($data['data'])) {
             $this->fail('The response data is empty');
         }
 
-        return $data;
-    }
-
-    /**
-     * @param $payload
-     * @return array
-     */
-    protected function jsonEncodeDataFields($payload)
-    {
-        foreach ($payload as $key => $value) {
-            if (in_array($key, $this->jsonFields())) {
-                $payload[$key] = json_encode($value);
-            }
-        }
-        return $payload;
+        return $data['data'];
     }
 
     protected function defaultHeaders()

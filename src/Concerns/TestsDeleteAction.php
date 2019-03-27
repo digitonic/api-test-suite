@@ -48,6 +48,11 @@ trait TestsDeleteAction
      */
     public function requiredHeaders()
     {
-        return array_merge($this->defaultHeaders(), []);
+        return $this->defaultHeaders();
+    }
+
+    public function creationHeaders()
+    {
+        return $this->defaultHeaders();
     }
 }

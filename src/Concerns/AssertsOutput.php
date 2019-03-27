@@ -4,33 +4,35 @@ namespace Digitonic\ApiTestSuite\Concerns;
 
 trait AssertsOutput
 {
+    protected $isCollection;
+
+    protected $updateData;
+
     /**
      * @param array $data
      * @param $identifier
-     * @param $httpAction
      * @param $included
      */
-    protected function checkTransformerData(array $data, $identifier, $httpAction, $included)
+    protected function checkTransformerData(array $data, $identifier)
     {
         if ($this->isCollection($data)) {
             foreach ($data as $entity) {
-                $this->assertIndividualEntityTransformerData($entity, $identifier, $httpAction, $included);
+                $this->assertIndividualEntityTransformerData($entity, $identifier);
             }
         } else {
-            $this->assertIndividualEntityTransformerData($data, $identifier, $httpAction, $included);
+            $this->assertIndividualEntityTransformerData($data, $identifier);
         }
     }
 
     /**
      * @param $data
      * @param $identifier
-     * @param $httpAction
      * @param $included
      */
-    protected function assertIndividualEntityTransformerData($data, $identifier, $httpAction, $included)
+    protected function assertIndividualEntityTransformerData($data, $identifier)
     {
         $this->assertTransformerReplacesKeys(['id' => $identifier], $data);
-        $this->assertDataIsPresent($data, $httpAction, $included);
+        $this->assertDataIsPresent($data);
         $this->assertTimestamps($data);
         $this->assertLinks($data, $identifier);
     }
@@ -51,22 +53,15 @@ trait AssertsOutput
 
     /**
      * @param array $data
-     * @param $httpAction
-     * @param $includedData
      */
-    protected function assertDataIsPresent(array $data, $httpAction, $includedData)
+    protected function assertDataIsPresent(array $data)
     {
-        $expected = $httpAction === 'put'
-            ? $this->generateUpdateData($this->expectedResourceData())
-            : $this->expectedResourceData();
-
-        foreach (array_keys($includedData) as $included) {
-            $expected[$included] = ['data' => $expected[$included]];
-        }
-
+        $expected = $this->expectedResourceData();
         foreach ($expected as $key => $value) {
             $this->assertArrayHasKey($key, $data);
-            $this->assertTrue($expected[$key] == $data[$key]);
+            if (!$this->isCollection){
+                $this->assertTrue($expected[$key] == $data[$key]);
+            }
         }
     }
 
@@ -100,12 +95,18 @@ trait AssertsOutput
 
     protected function isCollection(array $data)
     {
-        if (empty($data)){
-            return false;
+        if (isset($this->isCollection)){
+            return $this->isCollection;
         }
 
-        return array_reduce($data, function($carry, $item){
+        if (empty($data)){
+            $this->isCollection = false;
+        }
+
+        $this->isCollection = array_reduce($data, function($carry, $item){
             return $carry && is_array($item);
         }, true);
+
+        return $this->isCollection;
     }
 }

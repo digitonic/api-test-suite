@@ -10,11 +10,6 @@ interface InteractsWithApi
     public function routeName();
 
     /**
-     * @return array
-     */
-    public function jsonFields();
-
-    /**
      * @return string
      */
     public function httpAction();

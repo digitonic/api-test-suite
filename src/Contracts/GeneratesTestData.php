@@ -2,35 +2,32 @@
 
 namespace Digitonic\ApiTestSuite\Contracts;
 
+use Illuminate\Database\Eloquent\Model;
+
 interface GeneratesTestData
 {
-    /**
-     * @return float
-     */
-    public function entitiesNumber();
-
     /**
      * @return string|null
      */
     public function authorizingClass();
 
     /**
-     * @return array
-     */
-    public function payload();
-
-    /**
-     * @return array
-     */
-    public function includedData();
-
-    /**
-     * @return array
-     */
-    public function manyToManyRelationships();
-
-    /**
      * @return string
      */
     public function resourceClass();
+
+    /**
+     * @return array
+     */
+    public function creationRules();
+
+    /**
+     * @return Model|string
+     */
+    public function createResource();
+
+    /**
+     * @return array
+     */
+    public function creationHeaders();
 }
