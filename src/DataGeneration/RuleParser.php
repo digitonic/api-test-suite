@@ -8,10 +8,13 @@ class RuleParser
 {
     const RULE_ORDER = [
         'required' => 1,
-        'after' => 2,
         'before' => 2,
-        'date_format' => 98,
-        'max' => 99
+        'before_or_equal' => 2,
+        'after' => 3,
+        'after_or_equal' => 3,
+        'max' => 98,
+        'date_format' => 99,
+        'between' => 99,
     ];
 
     /**
@@ -30,18 +33,16 @@ class RuleParser
         $factory = new RuleFactory();
         $rulesArray = explode('|', $rules);
 
-        usort($rulesArray, function($a, $b){
+        usort($rulesArray, function ($a, $b) {
             $aName = $this->getRuleName($a);
             $aWeight = isset(self::RULE_ORDER[$aName]) ? self::RULE_ORDER[$aName] : 50;
             $bName = $this->getRuleName($b);
             $bWeight = isset(self::RULE_ORDER[$bName]) ? self::RULE_ORDER[$bName] : 50;
-            if ($aWeight == $bWeight){
+            if ($aWeight == $bWeight) {
                 return 0;
             }
             return $aWeight > $bWeight ? 1 : -1;
         });
-
-        // todo reorder: Make MaxRule as last, 'after' and 'before' before 'date_format'
 
         $ruleSet = new RuleCollection();
         foreach ($rulesArray as $rule) {
@@ -49,8 +50,7 @@ class RuleParser
             $params = $this->getRuleParams($rule);
             $ruleSet->push($factory->build($ruleName, $params));
         }
-
-
+        
         return $ruleSet;
     }
 

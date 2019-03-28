@@ -8,6 +8,8 @@ use Digitonic\ApiTestSuite\DataGeneration\Rules\ArrayRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\BooleanRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\CallbackRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\DateRule;
+use Digitonic\ApiTestSuite\DataGeneration\Rules\AfterRule;
+use Digitonic\ApiTestSuite\DataGeneration\Rules\BeforeRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\InRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\IntegerRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\MaxRule;
@@ -16,6 +18,8 @@ use Digitonic\ApiTestSuite\DataGeneration\Rules\RequiredRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\StringRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\UniqueRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\UrlRule;
+use Digitonic\ApiTestSuite\DataGeneration\Rules\NumericRule;
+use Digitonic\ApiTestSuite\DataGeneration\Rules\BetweenRule;
 
 class RuleFactory
 {
@@ -33,6 +37,8 @@ class RuleFactory
                 return new BooleanRule();
             case 'integer':
                 return new IntegerRule();
+            case 'numeric':
+                return new NumericRule();
             case 'allowed_recipients':
                 return new AllowedRecipientsRule();
             case 'array':
@@ -48,11 +54,28 @@ class RuleFactory
             case 'max':
                 return New MaxRule($parameters);
             case 'date_format':
-                return new DateRule($parameters, 1, Carbon::parse('+80years')->getTimestamp());
+                $rule = new DateRule();
+                $rule->setFormat($parameters);
+                return $rule;
             case 'after':
-                return new DateRule('Y-m-d H:i:s', Carbon::parse($parameters)->getTimestamp(), Carbon::parse('+80years')->getTimestamp());
+                $rule = new DateRule();
+                $rule->setAfter(Carbon::parse($parameters)->getTimestamp(), true);
+                return $rule;
+            case 'after_or_equal':
+                $rule = new DateRule();
+                $rule->setAfter(Carbon::parse($parameters)->getTimestamp(), false);
+                return $rule;
             case 'before':
-                return new DateRule('Y-m-d H:i:s', 1, Carbon::parse($parameters)->getTimestamp());
+                $rule = new DateRule();
+                $rule->setBefore(Carbon::parse($parameters)->getTimestamp(), true);
+                return $rule;
+            case 'before_or_equal':
+                $rule = new DateRule();
+                $rule->setBefore(Carbon::parse($parameters)->getTimestamp(), false);
+                return $rule;
+            case 'between':
+                $params = explode(',', $parameters);
+                return new BetweenRule($params[0], $params[1]);
             default:
                 return new NullRule();
         }

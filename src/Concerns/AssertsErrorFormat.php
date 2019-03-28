@@ -18,10 +18,13 @@ trait AssertsErrorFormat
     {
         $response->assertStatus($status);
         $this->assertRegExp(
-            "/" . View::file(
+            "/" . trim(View::file(
                 config('digitonic.api-test-suite.templates.base_path') . 'errors/' . $status . '.blade.php',
                 $data
-            )->render() . "/",
+            )->with([
+                'exception' => $response->exception
+            ])->render()) . "/",
+            
             $response->getContent()
         );
     }

@@ -3,6 +3,7 @@
 namespace Digitonic\ApiTestSuite\DataGeneration;
 
 use Digitonic\ApiTestSuite\DataGeneration\Contracts\Rule;
+use Digitonic\ApiTestSuite\DataGeneration\Rules\DateRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\RequiredRule;
 use Illuminate\Support\Collection;
 
@@ -36,5 +37,35 @@ class RuleCollection extends Collection
     public function setRequired($required)
     {
         $this->required = $required;
+    }
+
+    public function push($value)
+    {
+        if ($value instanceof DateRule){
+            foreach($this->items as $index=>$rule){
+                if ($rule instanceof DateRule){
+                    $this->updateDateRule($value, $index);
+                } else {
+                    parent::push($value);
+                }
+            }
+        } else {
+            parent::push($value);
+        }
+    }
+
+    public function updateDateRule(DateRule $rule, $index)
+    {
+        if (!$this->items[$index]->getAfter() && $rule->getAfter()){
+            $this->items[$index]->setAfter($rule->getAfter(), $rule->getStrictAfter());
+        }
+
+        if (!$this->items[$index]->getBefore() && $rule->getBefore()){
+            $this->items[$index]->setBefore($rule->getBefore(), $rule->getStrictBefore());
+        }
+
+        if (!$this->items[$index]->getFormat() && $rule->getFormat()){
+            $this->items[$index]->setFormat($rule->getFormat());
+        }
     }
 }
