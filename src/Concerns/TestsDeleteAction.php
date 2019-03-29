@@ -55,4 +55,12 @@ trait TestsDeleteAction
     {
         return $this->defaultHeaders();
     }
+
+    /**
+     * @return bool
+     */
+    public function shouldAssertNonDuplication()
+    {
+        return false;
+    }
 }

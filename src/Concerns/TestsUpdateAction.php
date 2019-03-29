@@ -57,4 +57,12 @@ trait TestsUpdateAction
     {
         return $this->defaultHeaders();
     }
+
+    /**
+     * @return bool
+     */
+    public function shouldAssertNonDuplication()
+    {
+        return false;
+    }
 }

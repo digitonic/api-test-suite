@@ -30,7 +30,7 @@ trait GeneratesTestData
         for ($i = 1; $i < $numberOfEntities; $i++) {
             $this->entities->push($this->generateSingleEntity($baseUser));
         }
-        if ($httpAction === 'get' && $this->authorizingClass()) {
+        if ($httpAction === 'get') {
             $this->entities->push($this->generateSingleEntity($otherUser));
         }
     }

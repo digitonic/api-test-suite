@@ -2,6 +2,10 @@
 
 namespace Digitonic\ApiTestSuite\Contracts;
 
+/**
+ * Interface DeterminesAssertions
+ * @package Digitonic\ApiTestSuite\Contracts
+ */
 interface DeterminesAssertions
 {
     /**
@@ -13,4 +17,9 @@ interface DeterminesAssertions
      * @return array
      */
     public function statusCodes();
+
+    /**
+     * @return bool
+     */
+    public function shouldAssertNonDuplication();
  }
