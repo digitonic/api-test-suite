@@ -56,7 +56,7 @@ trait AssertsOutput
      */
     protected function assertDataIsPresent(array $data)
     {
-        $expected = $this->expectedResourceData();
+        $expected = $this->expectedResourceData($data);
         foreach ($expected as $key => $value) {
             $this->assertArrayHasKey($key, $data);
             if (!$this->isCollection){
