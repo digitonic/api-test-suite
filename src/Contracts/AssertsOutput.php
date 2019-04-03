@@ -24,5 +24,5 @@ interface AssertsOutput
     /**
      * @return array
      */
-    public function expectedResourceData();
+    public function expectedResourceData(array $data);
 }

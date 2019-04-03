@@ -206,16 +206,21 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
                     /** @var TestResponse $response */
                     $response = $this->doAuthenticatedRequest([], ['page' => $page, 'per_page' => $entitiesPerPage]);
                     $this->assertPaginationFormat($response, $count, $entitiesNumber);
+                    $response->assertStatus(Response::HTTP_OK);
+                    $this->checkTransformerData(
+                        $this->getResponseData($response),
+                        $this->identifier()
+                    );
                 }
             } else {
                 $response = $this->doAuthenticatedRequest([]);
                 $this->assertCount($entitiesNumber, $this->getResponseData($response));
+                $response->assertStatus(Response::HTTP_OK);
+                $this->checkTransformerData(
+                    $this->getResponseData($response),
+                    $this->identifier()
+                );
             }
-            $response->assertStatus(Response::HTTP_OK);
-            $this->checkTransformerData(
-                $this->getResponseData($response),
-                $this->identifier()
-            );
         }
     }
 
