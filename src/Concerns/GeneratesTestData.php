@@ -3,6 +3,7 @@
 namespace Digitonic\ApiTestSuite\Concerns;
 
 use Digitonic\ApiTestSuite\DataGeneration\RuleParser;
+use Illuminate\Foundation\Testing\TestResponse;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Collection;
 
@@ -51,6 +52,7 @@ trait GeneratesTestData
     public function generateEntityOverApi(array $payload, $user)
     {
         $this->withoutMiddleware(ThrottleRequests::class);
+        /** @var TestResponse $response */
         $response = $this->actingAs($user)->call(
             'post',
             route($this->createResource()),

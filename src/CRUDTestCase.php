@@ -154,7 +154,7 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
                 $this->getResponseData($response),
                 $this->identifier()
             );
-            if ($this->shouldAssertNonDuplication()){
+            if ($this->shouldAssertNonDuplication()) {
                 $this->assertCreatedOnlyOnce();
             }
         }
