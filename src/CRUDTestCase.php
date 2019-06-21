@@ -164,7 +164,7 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
     protected function assertCreatedOnlyOnce()
     {
         $this->doAuthenticatedRequest($this->payload, [$this->getCurrentIdentifier()]);
-        if ($this->shouldAssertNonDuplication()) {
+        if ($this->cannotBeDuplicated()) {
             $this->assertCount(1, $this->resourceClass()::all());
         } else {
             $this->assertCount(2, $this->resourceClass()::all());

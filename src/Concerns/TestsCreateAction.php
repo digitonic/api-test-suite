@@ -50,7 +50,7 @@ trait TestsCreateAction
     /**
      * @return bool
      */
-    public function shouldAssertNonDuplication()
+    public function cannotBeDuplicated()
     {
         return true;
     }

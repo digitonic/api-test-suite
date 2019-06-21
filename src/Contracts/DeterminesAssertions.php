@@ -21,5 +21,5 @@ interface DeterminesAssertions
     /**
      * @return bool
      */
-    public function shouldAssertNonDuplication();
+    public function cannotBeDuplicated();
  }
