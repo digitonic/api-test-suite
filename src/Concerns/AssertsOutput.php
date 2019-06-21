@@ -73,6 +73,8 @@ trait AssertsOutput
         if ($this->expectsTimestamps()) {
             $this->assertArrayHasKey('created_at', $data);
             $this->assertArrayHasKey('updated_at', $data);
+            $this->assertIsString($data['created_at']);
+            $this->assertIsString($data['updated_at']);
         }
     }
 
