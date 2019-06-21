@@ -40,18 +40,18 @@ trait AssertPagination
     }
 
     /**
-     * @return int
-     */
-    protected function entitiesPerPage()
-    {
-        return config('digitonic.api-test-suite.entities_per_page');
-    }
-
-    /**
      * @return float
      */
     protected function entitiesNumber()
     {
         return 1.5 * $this->entitiesPerPage();
+    }
+
+    /**
+     * @return int
+     */
+    protected function entitiesPerPage()
+    {
+        return config('digitonic.api-test-suite.entities_per_page');
     }
 }

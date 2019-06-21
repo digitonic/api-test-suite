@@ -22,4 +22,4 @@ interface DeterminesAssertions
      * @return bool
      */
     public function cannotBeDuplicated();
- }
+}

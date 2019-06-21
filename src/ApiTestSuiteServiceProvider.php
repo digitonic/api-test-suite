@@ -24,15 +24,19 @@ class ApiTestSuiteServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->mergeConfigFrom(__DIR__.'/../config/api-test-suite.php', 'digitonic.api-test-suite');
+        $this->mergeConfigFrom(__DIR__ . '/../config/api-test-suite.php', 'digitonic.api-test-suite');
 
-        $this->commands([
-            Installer::class,
-        ]);
+        $this->commands(
+            [
+                Installer::class,
+            ]
+        );
 
-        $this->publishes([
-            __DIR__.'/../config/api-test-suite.php' => config_path('digitonic/api-test-suite.php'),
-            __DIR__.'/../templates/' => base_path('tests/templates/')
-        ]);
+        $this->publishes(
+            [
+                __DIR__ . '/../config/api-test-suite.php' => config_path('digitonic/api-test-suite.php'),
+                __DIR__ . '/../templates/' => base_path('tests/templates/')
+            ]
+        );
     }
 }

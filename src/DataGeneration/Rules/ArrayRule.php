@@ -10,9 +10,11 @@ class ArrayRule extends BaseRule implements Rule
     public function handle(array &$payload, $field, array $rules, $newValueSeed, $class, $user)
     {
         $payload[$field] = [];
-        $relatedFields = collect($rules)->filter(function ($item, $index) use ($field) {
-            return strpos($index, $field . '.') !== false;
-        })->toArray();
+        $relatedFields = collect($rules)->filter(
+            function ($item, $index) use ($field) {
+                return strpos($index, $field . '.') !== false;
+            }
+        )->toArray();
 
         if (count($relatedFields)) {
             foreach ($relatedFields as $subField => $rules) {

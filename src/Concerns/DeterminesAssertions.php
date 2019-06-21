@@ -7,12 +7,11 @@ use Illuminate\Http\Response;
 trait DeterminesAssertions
 {
     /**
-     * @param $httpAction
      * @return bool
      */
-    protected function isListAction($httpAction)
+    protected function shouldAssertAuthentication()
     {
-        return !$this->shouldReturnsStatus(Response::HTTP_NOT_FOUND) && $httpAction == 'get';
+        return $this->shouldReturnsStatus(Response::HTTP_UNAUTHORIZED);
     }
 
     /**
@@ -22,14 +21,6 @@ trait DeterminesAssertions
     protected function shouldReturnsStatus($statusCode)
     {
         return collect($this->statusCodes())->contains($statusCode);
-    }
-
-    /**
-     * @return bool
-     */
-    protected function shouldAssertAuthentication()
-    {
-        return $this->shouldReturnsStatus(Response::HTTP_UNAUTHORIZED);
     }
 
     /**
@@ -79,6 +70,15 @@ trait DeterminesAssertions
     protected function shouldAssertRetrieve($httpAction)
     {
         return $this->shouldReturnsStatus(Response::HTTP_OK) && !$this->isListAction($httpAction);
+    }
+
+    /**
+     * @param $httpAction
+     * @return bool
+     */
+    protected function isListAction($httpAction)
+    {
+        return !$this->shouldReturnsStatus(Response::HTTP_NOT_FOUND) && $httpAction == 'get';
     }
 
     /**

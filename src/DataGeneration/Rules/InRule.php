@@ -30,6 +30,6 @@ class InRule extends BaseRule implements Rule
      */
     public function handle(array &$payload, $field, array $rules, $newValueSeed, $class, $user)
     {
-        $payload[$field] = $this->array[random_int(0, sizeof($this->array)-1)];
+        $payload[$field] = $this->array[random_int(0, sizeof($this->array) - 1)];
     }
 }

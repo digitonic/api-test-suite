@@ -28,13 +28,16 @@ class CallbackRule extends BaseRule implements Rule
      */
     public function handle(array &$payload, $field, array $rules, $newValueSeed, $class, $user)
     {
-        $payload[$field] = $this->callback->call($this, [
-            'payload' => $payload,
-            'field' => $field,
-            'rules' => $rules,
-            'newValueSeed' => $newValueSeed,
-            'class' => $class,
-            'user' =>$user
-        ]);
+        $payload[$field] = $this->callback->call(
+            $this,
+            [
+                'payload' => $payload,
+                'field' => $field,
+                'rules' => $rules,
+                'newValueSeed' => $newValueSeed,
+                'class' => $class,
+                'user' => $user
+            ]
+        );
     }
 }

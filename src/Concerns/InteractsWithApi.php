@@ -37,6 +37,11 @@ trait InteractsWithApi
         );
     }
 
+    protected function defaultHeaders()
+    {
+        return config('digitonic.api-test-suite.default_headers');
+    }
+
     /**
      * @param TestResponse $response
      * @return array
@@ -50,10 +55,5 @@ trait InteractsWithApi
         }
 
         return $data['data'];
-    }
-
-    protected function defaultHeaders()
-    {
-        return config('digitonic.api-test-suite.default_headers');
     }
 }

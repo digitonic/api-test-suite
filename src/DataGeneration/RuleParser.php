@@ -33,16 +33,19 @@ class RuleParser
         $factory = new RuleFactory();
         $rulesArray = explode('|', $rules);
 
-        usort($rulesArray, function ($a, $b) {
-            $aName = $this->getRuleName($a);
-            $aWeight = isset(self::RULE_ORDER[$aName]) ? self::RULE_ORDER[$aName] : 50;
-            $bName = $this->getRuleName($b);
-            $bWeight = isset(self::RULE_ORDER[$bName]) ? self::RULE_ORDER[$bName] : 50;
-            if ($aWeight == $bWeight) {
-                return 0;
+        usort(
+            $rulesArray,
+            function ($a, $b) {
+                $aName = $this->getRuleName($a);
+                $aWeight = isset(self::RULE_ORDER[$aName]) ? self::RULE_ORDER[$aName] : 50;
+                $bName = $this->getRuleName($b);
+                $bWeight = isset(self::RULE_ORDER[$bName]) ? self::RULE_ORDER[$bName] : 50;
+                if ($aWeight == $bWeight) {
+                    return 0;
+                }
+                return $aWeight > $bWeight ? 1 : -1;
             }
-            return $aWeight > $bWeight ? 1 : -1;
-        });
+        );
 
         $ruleSet = new RuleCollection();
         foreach ($rulesArray as $rule) {
@@ -50,16 +53,8 @@ class RuleParser
             $params = $this->getRuleParams($rule);
             $ruleSet->push($factory->build($ruleName, $params));
         }
-        
-        return $ruleSet;
-    }
 
-    /**
-     * @return string
-     */
-    public function getRaw()
-    {
-        return $this->raw;
+        return $ruleSet;
     }
 
     /**
@@ -80,5 +75,13 @@ class RuleParser
     {
         $rule = explode(':', $rule, 2);
         return isset($rule[1]) ? $rule[1] : '';
+    }
+
+    /**
+     * @return string
+     */
+    public function getRaw()
+    {
+        return $this->raw;
     }
 }

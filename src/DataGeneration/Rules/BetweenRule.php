@@ -20,9 +20,9 @@ class BetweenRule extends BaseRule implements Rule
     public function handle(array &$payload, $field, array $rules, $newValueSeed, $class, $user)
     {
         $type = gettype($payload[$field]);
-        
-        if ($type === 'double'){ 
-            $type = 'float'; 
+
+        if ($type === 'double') {
+            $type = 'float';
         }
 
         $var = rand($this->min, $this->max);

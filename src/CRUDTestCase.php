@@ -11,8 +11,8 @@ use Digitonic\ApiTestSuite\Concerns\InteractsWithApi;
 use Digitonic\ApiTestSuite\Contracts\AssertsOutput as AssertsOutputI;
 use Digitonic\ApiTestSuite\Contracts\CRUDTestCase as CRUDTestCaseI;
 use Digitonic\ApiTestSuite\Contracts\DeterminesAssertions as DeterminesAssertionsI;
-use Digitonic\ApiTestSuite\Contracts\InteractsWithApi as InteractsWithApiI;
 use Digitonic\ApiTestSuite\Contracts\GeneratesTestData as GeneratesTestDataI;
+use Digitonic\ApiTestSuite\Contracts\InteractsWithApi as InteractsWithApiI;
 use Illuminate\Foundation\Testing\TestResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
@@ -102,17 +102,23 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
         $response = $this->doAuthenticatedRequest($data, [$this->getCurrentIdentifier()]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         if ($assertValidationResponse) {
-            $this->assertErrorFormat($response, Response::HTTP_UNPROCESSABLE_ENTITY, [
-                'fieldName' => $key,
-                'formattedFieldName' => str_replace('_', ' ', $key)
-            ]);
+            $this->assertErrorFormat(
+                $response,
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                [
+                    'fieldName' => $key,
+                    'formattedFieldName' => str_replace('_', ' ', $key)
+                ]
+            );
         }
     }
 
     protected function assertAccessIsForbidden()
     {
         if ($this->shouldAssertForbiddenAction()) {
-            $entity = $this->generateSingleEntity(factory(config('digitonic.api-test-suite.api_user_class'))->state('crud')->create());
+            $entity = $this->generateSingleEntity(
+                factory(config('digitonic.api-test-suite.api_user_class'))->state('crud')->create()
+            );
             /** @var TestResponse $response */
             $identifier = $this->identifier();
             $response = $this->doAuthenticatedRequest([], [$entity->$identifier]);
@@ -182,9 +188,14 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
                 $this->getResponseData($response),
                 $this->identifier()
             );
-            $this->assertCount(1, $this->resourceClass()::where([
-                $this->identifier() => $this->getCurrentIdentifier()
-            ])->get());
+            $this->assertCount(
+                1,
+                $this->resourceClass()::where(
+                    [
+                        $this->identifier() => $this->getCurrentIdentifier()
+                    ]
+                )->get()
+            );
         }
     }
 

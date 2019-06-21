@@ -49,6 +49,19 @@ trait GeneratesTestData
         return $payload;
     }
 
+    protected function generateSingleEntity($user, $payload = null)
+    {
+        if (!$payload) {
+            $payload = $this->generatePayload($user);
+        }
+
+        if (is_string($this->createResource())) {
+            return $this->generateEntityOverApi($payload, $user);
+        } else {
+            return $this->createResource()->call($this, ['payload' => $payload, 'user' => $user]);
+        }
+    }
+
     public function generateEntityOverApi(array $payload, $user)
     {
         $this->withoutMiddleware(ThrottleRequests::class);
@@ -66,6 +79,11 @@ trait GeneratesTestData
         $id = json_decode($response->getContent(), true)['data'][$this->identifier()];
 
         return $this->resourceClass()::where([$this->identifier() => $id])->first();
+    }
+
+    protected function identifier()
+    {
+        return config('digitonic.api-test-suite.identifier_field')->call($this);
     }
 
     /**
@@ -101,23 +119,5 @@ trait GeneratesTestData
     {
         $identifier = $this->identifier();
         return $this->entities->isEmpty() ? null : $this->entities->first()->$identifier;
-    }
-
-    protected function identifier()
-    {
-        return config('digitonic.api-test-suite.identifier_field')->call($this);
-    }
-
-    protected function generateSingleEntity($user, $payload = null)
-    {
-        if (!$payload) {
-            $payload = $this->generatePayload($user);
-        }
-
-        if (is_string($this->createResource())) {
-            return $this->generateEntityOverApi($payload, $user);
-        } else {
-            return $this->createResource()->call($this, ['payload' => $payload, 'user' => $user]);
-        }
     }
 }

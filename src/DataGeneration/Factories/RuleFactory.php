@@ -3,33 +3,33 @@
 namespace Digitonic\ApiTestSuite\DataGeneration\Factories;
 
 use Carbon\Carbon;
+use Digitonic\ApiTestSuite\DataGeneration\Rules\AfterRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\AllowedRecipientsRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\ArrayRule;
+use Digitonic\ApiTestSuite\DataGeneration\Rules\BeforeRule;
+use Digitonic\ApiTestSuite\DataGeneration\Rules\BetweenRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\BooleanRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\CallbackRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\DateRule;
-use Digitonic\ApiTestSuite\DataGeneration\Rules\AfterRule;
-use Digitonic\ApiTestSuite\DataGeneration\Rules\BeforeRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\InRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\IntegerRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\MaxRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\NullRule;
+use Digitonic\ApiTestSuite\DataGeneration\Rules\NumericRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\RequiredRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\StringRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\UniqueRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\UrlRule;
-use Digitonic\ApiTestSuite\DataGeneration\Rules\NumericRule;
-use Digitonic\ApiTestSuite\DataGeneration\Rules\BetweenRule;
 
 class RuleFactory
 {
     public function build($rule, $parameters)
     {
-        if (in_array($rule, array_keys(config('digitonic.api-test-suite.creation_rules')))){
+        if (in_array($rule, array_keys(config('digitonic.api-test-suite.creation_rules')))) {
             return new CallbackRule(config('digitonic.api-test-suite.creation_rules')[$rule]);
         }
 
-        switch($rule){
+        switch ($rule) {
             case 'string':
             case 'alpha_num':
                 return new StringRule();

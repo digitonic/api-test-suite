@@ -24,6 +24,27 @@ trait AssertsOutput
         }
     }
 
+    protected function isCollection(array $data)
+    {
+        if (isset($this->isCollection)) {
+            return $this->isCollection;
+        }
+
+        if (empty($data)) {
+            $this->isCollection = false;
+        }
+
+        $this->isCollection = array_reduce(
+            $data,
+            function ($carry, $item) {
+                return $carry && is_array($item);
+            },
+            true
+        );
+
+        return $this->isCollection;
+    }
+
     /**
      * @param $data
      * @param $identifier
@@ -59,7 +80,7 @@ trait AssertsOutput
         $expected = $this->expectedResourceData($data);
         foreach ($expected as $key => $value) {
             $this->assertArrayHasKey($key, $data);
-            if (!$this->isCollection){
+            if (!$this->isCollection) {
                 $this->assertTrue($expected[$key] == $data[$key]);
             }
         }
@@ -93,22 +114,5 @@ trait AssertsOutput
                 $data['links']
             );
         }
-    }
-
-    protected function isCollection(array $data)
-    {
-        if (isset($this->isCollection)){
-            return $this->isCollection;
-        }
-
-        if (empty($data)){
-            $this->isCollection = false;
-        }
-
-        $this->isCollection = array_reduce($data, function($carry, $item){
-            return $carry && is_array($item);
-        }, true);
-
-        return $this->isCollection;
     }
 }
