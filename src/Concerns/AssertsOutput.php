@@ -103,6 +103,7 @@ trait AssertsOutput
 
         if (empty($data)){
             $this->isCollection = false;
+            return $this->isCollection;
         }
 
         $this->isCollection = array_reduce($data, function($carry, $item){
