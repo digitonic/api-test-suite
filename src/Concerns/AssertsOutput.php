@@ -13,14 +13,14 @@ trait AssertsOutput
      * @param $identifier
      * @param $included
      */
-    protected function checkTransformerData(array $data, $identifier)
+    protected function checkTransformerData(array $data, $identifier, $updatedAt = null)
     {
         if ($this->isCollection($data)) {
             foreach ($data as $entity) {
                 $this->assertIndividualEntityTransformerData($entity, $identifier);
             }
         } else {
-            $this->assertIndividualEntityTransformerData($data, $identifier);
+            $this->assertIndividualEntityTransformerData($data, $identifier, $updatedAt);
         }
     }
 
@@ -29,11 +29,11 @@ trait AssertsOutput
      * @param $identifier
      * @param $included
      */
-    protected function assertIndividualEntityTransformerData($data, $identifier)
+    protected function assertIndividualEntityTransformerData($data, $identifier, $updatedAt = null)
     {
         $this->assertTransformerReplacesKeys(['id' => $identifier], $data);
         $this->assertDataIsPresent($data);
-        $this->assertTimestamps($data);
+        $this->assertTimestamps($data, $updatedAt);
         $this->assertLinks($data, $identifier);
     }
 
@@ -68,13 +68,16 @@ trait AssertsOutput
     /**
      * @param $data
      */
-    protected function assertTimestamps(array $data)
+    protected function assertTimestamps(array $data, ?string $updatedAt)
     {
         if ($this->expectsTimestamps()) {
             $this->assertArrayHasKey('created_at', $data);
             $this->assertArrayHasKey('updated_at', $data);
             $this->assertIsString($data['created_at']);
             $this->assertIsString($data['updated_at']);
+            if (!empty($updatedAt)){
+                $this->assertNotEquals($updatedAt, $data['updated_at']);
+            }
         }
     }
 

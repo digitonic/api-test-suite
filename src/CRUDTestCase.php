@@ -175,12 +175,18 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
     {
         if ($this->shouldAssertUpdate()) {
             $data = $this->updateData = $this->generateUpdateData($this->payload, $this->user);
+            $updatedAt = null;
+            if ($this->expectsTimestamps()){
+                $updatedAt = $this->entities->first()->updated_at;
+                sleep(1);
+            }
             /** @var TestResponse $response */
             $response = $this->doAuthenticatedRequest($data, [$this->getCurrentIdentifier()]);
             $response->assertStatus(Response::HTTP_ACCEPTED);
             $this->checkTransformerData(
                 $this->getResponseData($response),
-                $this->identifier()
+                $this->identifier(),
+                $updatedAt
             );
             $this->assertCount(1, $this->resourceClass()::where([
                 $this->identifier() => $this->getCurrentIdentifier()
