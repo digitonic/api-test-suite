@@ -11,8 +11,9 @@ use Digitonic\ApiTestSuite\Concerns\InteractsWithApi;
 use Digitonic\ApiTestSuite\Contracts\AssertsOutput as AssertsOutputI;
 use Digitonic\ApiTestSuite\Contracts\CRUDTestCase as CRUDTestCaseI;
 use Digitonic\ApiTestSuite\Contracts\DeterminesAssertions as DeterminesAssertionsI;
-use Digitonic\ApiTestSuite\Contracts\InteractsWithApi as InteractsWithApiI;
 use Digitonic\ApiTestSuite\Contracts\GeneratesTestData as GeneratesTestDataI;
+use Digitonic\ApiTestSuite\Contracts\InteractsWithApi as InteractsWithApiI;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\TestResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
@@ -102,17 +103,23 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
         $response = $this->doAuthenticatedRequest($data, [$this->getCurrentIdentifier()]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         if ($assertValidationResponse) {
-            $this->assertErrorFormat($response, Response::HTTP_UNPROCESSABLE_ENTITY, [
-                'fieldName' => $key,
-                'formattedFieldName' => str_replace('_', ' ', $key)
-            ]);
+            $this->assertErrorFormat(
+                $response,
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                [
+                    'fieldName' => $key,
+                    'formattedFieldName' => str_replace('_', ' ', $key)
+                ]
+            );
         }
     }
 
     protected function assertAccessIsForbidden()
     {
         if ($this->shouldAssertForbiddenAction()) {
-            $entity = $this->generateSingleEntity(factory(config('digitonic.api-test-suite.api_user_class'))->state('crud')->create());
+            $entity = $this->generateSingleEntity(
+                factory(config('digitonic.api-test-suite.api_user_class'))->state('crud')->create()
+            );
             /** @var TestResponse $response */
             $identifier = $this->identifier();
             $response = $this->doAuthenticatedRequest([], [$entity->$identifier]);
@@ -164,10 +171,32 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
     protected function assertCreatedOnlyOnce()
     {
         $this->doAuthenticatedRequest($this->payload, [$this->getCurrentIdentifier()]);
-        if ($this->cannotBeDuplicated()) {
-            $this->assertCount(1, $this->resourceClass()::all());
+        $class = $this->resourceClass();
+        if ((new $class) instanceof Model){
+            if ($this->cannotBeDuplicated()) {
+                $this->assertEquals(
+                    1,
+                    $this->resourceClass()::count(),
+                    'Failed asserting that ' . $this->resourceClass() . ' was created only once.'
+                    . ' Make sure that firstOrCreate() is used in the Controller '
+                    . 'or change the returned value for the test case '
+                    . 'method \'cannotBeDuplicated\' to be \'false\''
+                );
+            } else {
+                $this->assertEquals(
+                    2,
+                    $this->resourceClass()::count(),
+                    'Failed asserting that ' . $this->resourceClass() . ' was created twice.'
+                    . ' Make sure that firstOrCreate() is not used in the Controller '
+                    . 'or change the returned value for the test case '
+                    . 'method \'cannotBeDuplicated\' to be \'true\''
+                );
+            }
         } else {
-            $this->assertCount(2, $this->resourceClass()::all());
+            dump(
+                "Resource class {$class} does not extend ".
+                Model::class.". Skipping asserting that is duplicated or not."
+            );
         }
     }
 
@@ -176,21 +205,30 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
         if ($this->shouldAssertUpdate()) {
             $data = $this->updateData = $this->generateUpdateData($this->payload, $this->user);
             $updatedAt = null;
-            if ($this->expectsTimestamps()){
+            if ($this->expectsTimestamps()) {
                 $updatedAt = $this->entities->first()->updated_at;
                 sleep(1);
             }
             /** @var TestResponse $response */
             $response = $this->doAuthenticatedRequest($data, [$this->getCurrentIdentifier()]);
+            if ($response->getStatusCode() !== Response::HTTP_ACCEPTED){
+                // todo override assertStatus method instead
+                dump($response->getContent());
+            }
             $response->assertStatus(Response::HTTP_ACCEPTED);
             $this->checkTransformerData(
                 $this->getResponseData($response),
                 $this->identifier(),
                 $updatedAt
             );
-            $this->assertCount(1, $this->resourceClass()::where([
-                $this->identifier() => $this->getCurrentIdentifier()
-            ])->get());
+            $this->assertCount(
+                1,
+                $this->resourceClass()::where(
+                    [
+                        $this->identifier() => $this->getCurrentIdentifier()
+                    ]
+                )->get()
+            );
         }
     }
 
