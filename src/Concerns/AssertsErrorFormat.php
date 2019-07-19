@@ -2,8 +2,8 @@
 
 namespace Digitonic\ApiTestSuite\Concerns;
 
-use Illuminate\Foundation\Testing\TestResponse;
 use Illuminate\Support\Facades\View;
+use Digitonic\ApiTestSuite\TestResponse;
 
 trait AssertsErrorFormat
 {
@@ -18,14 +18,20 @@ trait AssertsErrorFormat
     {
         $response->assertStatus($status);
         $this->assertRegExp(
-            "/" . trim(View::file(
-                config('digitonic.api-test-suite.templates.base_path') . 'errors/' . $status . '.blade.php',
-                $data
-            )->with([
-                'exception' => $response->exception
-            ])->render()) . "/",
-            
-            $response->getContent()
+            "/" . trim(
+                View::file(
+                    config('digitonic.api-test-suite.templates.base_path') . 'errors/' . $status . '.blade.php',
+                    $data
+                )->with(
+                    [
+                        'exception' => $response->exception
+                    ]
+                )->render()
+            ) . "/",
+            $response->getContent(),
+
+            'Error response structure doesn\'t follow the template set up in '
+            .config('digitonic.api-test-suite.templates.base_path').' errors/{errorStatusCode}.blade.php.'
         );
     }
 }
