@@ -9,7 +9,7 @@ interface GeneratesTestData
     /**
      * @return string|null
      */
-    public function authorizingClass();
+    public function viewableByOwnerOnly();
 
     /**
      * @return string

@@ -31,7 +31,7 @@ trait AssertsOutput
      */
     protected function assertIndividualEntityTransformerData($data, $identifier, $updatedAt = null)
     {
-        $this->assertTransformerReplacesKeys(['id'], $data);
+        $this->assertTransformerReplacesKeys($data);
         $this->assertDataIsPresent($data);
         $this->assertTimestamps($data, $updatedAt);
         $this->assertLinks($data, $identifier);
@@ -41,11 +41,24 @@ trait AssertsOutput
      * @param array $replacements
      * @param $data
      */
-    protected function assertTransformerReplacesKeys(array $replacements, array $data)
+    protected function assertTransformerReplacesKeys(array $data)
     {
-        if ($this->authorizingClass()) {
-            foreach ($replacements as $original) {
-                $this->assertArrayNotHasKey($original, $data, 'Field \'id\' should not be present in public facing data');
+        if (!empty($this->fieldsReplacement())) {
+            foreach ($this->fieldsReplacement() as $original => $replacement) {
+                $this->assertArrayNotHasKey(
+                    $original,
+                    $data,
+                    'Field '
+                    . $original
+                    . ' should not be present in public facing data. Please make sure that '
+                    . $replacement . ' is used instead or change the `shouldReplaceFields` method implementation'
+                );
+                $this->assertArrayHasKey(
+                    $replacement,
+                    $data,
+                    'Field ' . $replacement . ' should be present in public facing data instead of ' 
+                    . $original . ' or change the `shouldReplaceFields` method implementation'
+                );
             }
         }
     }
@@ -63,7 +76,7 @@ trait AssertsOutput
                     $expected[$key] == $data[$key],
                     'The output data \'' . print_r($data[$key], true)
                     . '\'for the key \'' . $key . '\' doesn\'t match the expected \''
-                    . print_r($expected[$key],true) . '\''
+                    . print_r($expected[$key], true) . '\''
                 );
             }
         }
@@ -79,7 +92,7 @@ trait AssertsOutput
             $this->assertArrayHasKey('updated_at', $data);
             $this->assertIsString($data['created_at']);
             $this->assertIsString($data['updated_at']);
-            if (!empty($updatedAt)){
+            if (!empty($updatedAt)) {
                 $this->assertNotEquals(
                     $updatedAt,
                     $data['updated_at'],

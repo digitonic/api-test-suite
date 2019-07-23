@@ -14,17 +14,13 @@ use Digitonic\ApiTestSuite\Contracts\DeterminesAssertions as DeterminesAssertion
 use Digitonic\ApiTestSuite\Contracts\GeneratesTestData as GeneratesTestDataI;
 use Digitonic\ApiTestSuite\Contracts\InteractsWithApi as InteractsWithApiI;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Foundation\Testing\TestResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Tests\TestCase;
 
 abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOutputI, InteractsWithApiI, DeterminesAssertionsI, GeneratesTestDataI
 {
-    use AssertsOutput, InteractsWithApi, AssertsErrorFormat, AssertPagination, InteractsWithApi,
-        DeterminesAssertions, GeneratesTestData;
-
-    // TODO write a read.me with assumptions of the package about app structure
+    use AssertsOutput, InteractsWithApi, AssertsErrorFormat, AssertPagination, DeterminesAssertions, GeneratesTestData;
 
     /**
      * @var \Closure
@@ -172,7 +168,7 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
     {
         $this->doAuthenticatedRequest($this->payload, [$this->getCurrentIdentifier()]);
         $class = $this->resourceClass();
-        if ((new $class) instanceof Model){
+        if ((new $class) instanceof Model) {
             if ($this->cannotBeDuplicated()) {
                 $this->assertEquals(
                     1,
@@ -194,8 +190,8 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
             }
         } else {
             dump(
-                "Resource class {$class} does not extend ".
-                Model::class.". Skipping asserting that is duplicated or not."
+                "Resource class {$class} does not extend " .
+                Model::class . ". Skipping asserting that is duplicated or not."
             );
         }
     }
@@ -221,14 +217,23 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
                 $this->identifier(),
                 $updatedAt
             );
-            $this->assertCount(
-                1,
-                $this->resourceClass()::where(
-                    [
-                        $this->identifier() => $this->getCurrentIdentifier()
-                    ]
-                )->get()
-            );
+
+            $class = $this->resourceClass();
+            if ((new $class) instanceof Model) {
+                $this->assertCount(
+                    1,
+                    $this->resourceClass()::where(
+                        [
+                            $this->identifier() => $this->getCurrentIdentifier()
+                        ]
+                    )->get()
+                );
+            } else {
+                dump(
+                    "Resource class {$class} does not extend " .
+                    Model::class . ". Skipping asserting that is not duplicated on update."
+                );
+            }
         }
     }
 
@@ -262,7 +267,12 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
                 }
             } else {
                 $response = $this->doAuthenticatedRequest([]);
-                $this->assertCount($entitiesNumber, $this->getResponseData($response));
+                $this->assertCount(
+                    $entitiesNumber,
+                    $this->getResponseData($response),
+                    'The number of entities in the returned list does not match the number of entities that '
+                    .'have been created (no pagination required)'
+                );
                 $response->assertStatus(Response::HTTP_OK);
                 $this->checkTransformerData(
                     $this->getResponseData($response),
@@ -277,8 +287,28 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
         if ($this->shouldAssertDeletion()) {
             $response = $this->doAuthenticatedRequest([], [$this->getCurrentIdentifier()]);
             $response->assertStatus(Response::HTTP_NO_CONTENT);
-            $this->assertEmpty($response->getContent());
-            $this->assertNull($this->resourceClass()::find($this->entities->first()->id));
+            $this->assertEmpty($response->getContent(), 'The content returned on deletion of an entity should be empty');
+
+            $class = $this->resourceClass();
+            if ((new $class) instanceof Model) {
+                $this->assertNull($this->resourceClass()::find($this->entities->first()->id), 'The entity destroyed can still be found in the database');
+            } else {
+                dump(
+                    "Resource class {$class} does not extend " .
+                    Model::class . ". Skipping asserting that has been removed from database."
+                );
+            }
         }
+    }
+
+    /**
+     * Create the test response instance from the given response.
+     *
+     * @param  \Illuminate\Http\Response $response
+     * @return TestResponse
+     */
+    protected function createTestResponse($response)
+    {
+        return TestResponse::fromBaseResponse($response);
     }
 }
