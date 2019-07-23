@@ -207,10 +207,6 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
             }
             /** @var TestResponse $response */
             $response = $this->doAuthenticatedRequest($data, [$this->getCurrentIdentifier()]);
-            if ($response->getStatusCode() !== Response::HTTP_ACCEPTED){
-                // todo override assertStatus method instead
-                dump($response->getContent());
-            }
             $response->assertStatus(Response::HTTP_ACCEPTED);
             $this->checkTransformerData(
                 $this->getResponseData($response),
