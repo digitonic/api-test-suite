@@ -13,14 +13,14 @@ trait AssertsOutput
      * @param $identifier
      * @param $included
      */
-    protected function checkTransformerData(array $data, $identifier)
+    protected function checkTransformerData(array $data, $identifier, $updatedAt = null)
     {
         if ($this->isCollection($data)) {
             foreach ($data as $entity) {
                 $this->assertIndividualEntityTransformerData($entity, $identifier);
             }
         } else {
-            $this->assertIndividualEntityTransformerData($data, $identifier);
+            $this->assertIndividualEntityTransformerData($data, $identifier, $updatedAt);
         }
     }
 
@@ -50,11 +50,11 @@ trait AssertsOutput
      * @param $identifier
      * @param $included
      */
-    protected function assertIndividualEntityTransformerData($data, $identifier)
+    protected function assertIndividualEntityTransformerData($data, $identifier, $updatedAt = null)
     {
-        $this->assertTransformerReplacesKeys(['id' => $identifier], $data);
+        $this->assertTransformerReplacesKeys($data);
         $this->assertDataIsPresent($data);
-        $this->assertTimestamps($data);
+        $this->assertTimestamps($data, $updatedAt);
         $this->assertLinks($data, $identifier);
     }
 
@@ -62,12 +62,24 @@ trait AssertsOutput
      * @param array $replacements
      * @param $data
      */
-    protected function assertTransformerReplacesKeys(array $replacements, array $data)
+    protected function assertTransformerReplacesKeys(array $data)
     {
-        if ($this->authorizingClass()) {
-            foreach ($replacements as $original => $substitute) {
-                $this->assertArrayNotHasKey($original, $data);
-                $this->assertArrayHasKey($substitute, $data);
+        if (!empty($this->fieldsReplacement())) {
+            foreach ($this->fieldsReplacement() as $original => $replacement) {
+                $this->assertArrayNotHasKey(
+                    $original,
+                    $data,
+                    'Field '
+                    . $original
+                    . ' should not be present in public facing data. Please make sure that '
+                    . $replacement . ' is used instead or change the `shouldReplaceFields` method implementation'
+                );
+                $this->assertArrayHasKey(
+                    $replacement,
+                    $data,
+                    'Field ' . $replacement . ' should be present in public facing data instead of '
+                    . $original . ' or change the `shouldReplaceFields` method implementation'
+                );
             }
         }
     }
@@ -81,7 +93,12 @@ trait AssertsOutput
         foreach ($expected as $key => $value) {
             $this->assertArrayHasKey($key, $data);
             if (!$this->isCollection) {
-                $this->assertTrue($expected[$key] == $data[$key]);
+                $this->assertTrue(
+                    $expected[$key] == $data[$key],
+                    'The output data \'' . print_r($data[$key], true)
+                    . '\'for the key \'' . $key . '\' doesn\'t match the expected \''
+                    . print_r($expected[$key], true) . '\''
+                );
             }
         }
     }
@@ -89,13 +106,21 @@ trait AssertsOutput
     /**
      * @param $data
      */
-    protected function assertTimestamps(array $data)
+    protected function assertTimestamps(array $data, ?string $updatedAt)
     {
         if ($this->expectsTimestamps()) {
             $this->assertArrayHasKey('created_at', $data);
             $this->assertArrayHasKey('updated_at', $data);
             $this->assertIsString($data['created_at']);
             $this->assertIsString($data['updated_at']);
+            if (!empty($updatedAt)) {
+                $this->assertNotEquals(
+                    $updatedAt,
+                    $data['updated_at'],
+                    'The \'updated_at\' timestamp should change on update of the resource.'
+                    . ' Make sure it is done by calling touch() on that entity if it\'s not updated directly.'
+                );
+            }
         }
     }
 
@@ -114,5 +139,27 @@ trait AssertsOutput
                 $data['links']
             );
         }
+    }
+
+    protected function isCollection(array $data)
+    {
+        if (isset($this->isCollection)) {
+            return $this->isCollection;
+        }
+
+        if (empty($data)) {
+            $this->isCollection = false;
+            return $this->isCollection;
+        }
+
+        $this->isCollection = array_reduce(
+            $data,
+            function ($carry, $item) {
+                return $carry && is_array($item);
+            },
+            true
+        );
+
+        return $this->isCollection;
     }
 }

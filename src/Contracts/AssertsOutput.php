@@ -19,7 +19,7 @@ interface AssertsOutput
      *
      * @return string|null
      */
-    public function authorizingClass();
+    public function viewableByOwnerOnly();
 
     /**
      * @return array

@@ -22,4 +22,9 @@ interface DeterminesAssertions
      * @return bool
      */
     public function cannotBeDuplicated();
-}
+
+    /**
+     * @return array
+     */
+    public function fieldsReplacement();
+ }

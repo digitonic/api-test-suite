@@ -17,7 +17,9 @@ trait AssertPagination
         $response->assertStatus(Response::HTTP_OK);
         $this->assertCount(
             $expectedCount,
-            json_decode($response->getContent(), true)['data']
+            json_decode($response->getContent(), true)['data'],
+            'Pagination is failing. The number of entities returned doesn\'t match the expected '
+            . $expectedCount
         );
         $this->assertPaginationResponseStructure($response, $expectedTotal);
     }
@@ -35,7 +37,9 @@ trait AssertPagination
                     'total' => $total
                 ]
             )->render() . "/",
-            $response->getContent()
+            $response->getContent(),
+            'Pagination response structure doesn\'t follow the template set up in '
+            .config('digitonic.api-test-suite.templates.base_path').' pagination/pagination.blade.php.'
         );
     }
 

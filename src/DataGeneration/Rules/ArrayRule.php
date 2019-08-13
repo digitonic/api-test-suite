@@ -4,6 +4,7 @@ namespace Digitonic\ApiTestSuite\DataGeneration\Rules;
 
 use Digitonic\ApiTestSuite\DataGeneration\Contracts\Rule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\Rule as BaseRule;
+use Faker\Generator;
 
 class ArrayRule extends BaseRule implements Rule
 {
@@ -24,7 +25,7 @@ class ArrayRule extends BaseRule implements Rule
                 $ruleSet->generate($payload[$field], $subField, $relatedFields, $newValueSeed, $class, $user);
             }
         } else {
-            $payload[$field][0] = 0;
+            $payload[$field] = resolve(Generator::class)->words;
         }
     }
 }
