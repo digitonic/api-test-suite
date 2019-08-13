@@ -51,7 +51,7 @@ trait InteractsWithApi
         $data = json_decode($response->getContent(), true);
 
         if (!isset($data['data'])) {
-            $this->fail('The response data is empty');
+            $this->fail('The response data is empty. Content: '. $response->getContent());
         }
 
         return $data['data'];
