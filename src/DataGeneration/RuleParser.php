@@ -15,6 +15,7 @@ class RuleParser
         'max' => 98,
         'date_format' => 99,
         'between' => 99,
+        'date_between' => 99,
     ];
 
     /**
