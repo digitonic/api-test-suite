@@ -73,7 +73,7 @@ class RuleFactory
                 $rule = new DateRule();
                 $rule->setBefore(Carbon::parse($parameters)->getTimestamp(), false);
                 return $rule;
-            case 'between':
+            case 'date_between':
                 $params = explode(',', $parameters);
                 $rule = new DateRule();
                 $rule->setBefore(Carbon::parse($params[1])->getTimestamp(), false);
