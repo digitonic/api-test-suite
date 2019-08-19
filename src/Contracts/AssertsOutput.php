@@ -22,6 +22,7 @@ interface AssertsOutput
     public function viewableByOwnerOnly();
 
     /**
+     * @param array $data
      * @return array
      */
     public function expectedResourceData(array $data);

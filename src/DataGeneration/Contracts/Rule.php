@@ -10,6 +10,7 @@ interface Rule
      * @param array $rules
      * @param $newValueSeed
      * @param $class
+     * @param $user
      * @return mixed
      */
     public function handle(array &$payload, $field, array $rules, $newValueSeed, $class, $user);
