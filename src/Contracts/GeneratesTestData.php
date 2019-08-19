@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 interface GeneratesTestData
 {
     /**
-     * @return string|null
+     * @return bool
      */
     public function viewableByOwnerOnly();
 

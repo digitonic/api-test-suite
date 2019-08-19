@@ -17,11 +17,12 @@ interface AssertsOutput
     /**
      * This is the class through which the request authorization process validated
      *
-     * @return string|null
+     * @return bool
      */
     public function viewableByOwnerOnly();
 
     /**
+     * @param array $data
      * @return array
      */
     public function expectedResourceData(array $data);
