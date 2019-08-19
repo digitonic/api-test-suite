@@ -24,27 +24,6 @@ trait AssertsOutput
         }
     }
 
-    protected function isCollection(array $data)
-    {
-        if (isset($this->isCollection)) {
-            return $this->isCollection;
-        }
-
-        if (empty($data)) {
-            $this->isCollection = false;
-        }
-
-        $this->isCollection = array_reduce(
-            $data,
-            function ($carry, $item) {
-                return $carry && is_array($item);
-            },
-            true
-        );
-
-        return $this->isCollection;
-    }
-
     /**
      * @param $data
      * @param $identifier

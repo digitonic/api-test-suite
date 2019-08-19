@@ -3,10 +3,8 @@
 namespace Digitonic\ApiTestSuite\DataGeneration\Factories;
 
 use Carbon\Carbon;
-use Digitonic\ApiTestSuite\DataGeneration\Rules\AfterRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\AllowedRecipientsRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\ArrayRule;
-use Digitonic\ApiTestSuite\DataGeneration\Rules\BeforeRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\BetweenRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\BooleanRule;
 use Digitonic\ApiTestSuite\DataGeneration\Rules\CallbackRule;
@@ -53,6 +51,9 @@ class RuleFactory
                 return new InRule(explode(',', $parameters));
             case 'max':
                 return New MaxRule($parameters);
+            case 'between':
+                $params = explode(',', $parameters);
+                return new BetweenRule($params[0], $params[1]);
             case 'date_format':
                 $rule = new DateRule();
                 $rule->setFormat($parameters);
