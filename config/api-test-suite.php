@@ -3,6 +3,7 @@
 return [
     'api_user_class' => '',
     // the user class for which a factory with 'crud' state has been created, and which implements authenticatable
+    'required_response_headers' => [], //the headers your application should return
     'default_headers' => ['HTTP_ACCEPT' => 'application/json'],
     //the default headers for the api calls
     'entities_per_page' => 0,

@@ -158,6 +158,7 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
                 $this->identifier()
             );
             $this->assertCreatedOnlyOnce();
+            $this->checkRequiredResponseHeaders($response);
         }
     }
 
@@ -213,6 +214,7 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
                 $this->identifier(),
                 $updatedAt
             );
+            $this->checkRequiredResponseHeaders($response);
 
             $class = $this->resourceClass();
             if ((new $class) instanceof Model) {
@@ -242,6 +244,7 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
                 $this->getResponseData($response),
                 $this->identifier()
             );
+            $this->checkRequiredResponseHeaders($response);
         }
     }
 
@@ -260,6 +263,7 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
                         $this->getResponseData($response),
                         $this->identifier()
                     );
+                    $this->checkRequiredResponseHeaders($response);
                 }
             } else {
                 $response = $this->doAuthenticatedRequest([]);
@@ -274,6 +278,7 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
                     $this->getResponseData($response),
                     $this->identifier()
                 );
+                $this->checkRequiredResponseHeaders($response);
             }
         }
     }
@@ -283,6 +288,7 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
         if ($this->shouldAssertDeletion()) {
             $response = $this->doAuthenticatedRequest([], [$this->getCurrentIdentifier()]);
             $response->assertStatus(Response::HTTP_NO_CONTENT);
+            $this->checkRequiredResponseHeaders($response);
             $this->assertEmpty($response->getContent(), 'The content returned on deletion of an entity should be empty');
 
             $class = $this->resourceClass();

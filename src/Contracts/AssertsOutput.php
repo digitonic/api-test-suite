@@ -2,6 +2,8 @@
 
 namespace Digitonic\ApiTestSuite\Contracts;
 
+use Digitonic\ApiTestSuite\TestResponse;
+
 interface AssertsOutput
 {
     /**
@@ -26,4 +28,10 @@ interface AssertsOutput
      * @return array
      */
     public function expectedResourceData(array $data);
+
+    /**
+     * @param TestResponse $response
+     * @return bool
+     */
+    public function checkRequiredResponseHeaders(TestResponse $response): bool;
 }
