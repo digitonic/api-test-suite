@@ -2,6 +2,9 @@
 
 namespace Digitonic\ApiTestSuite\Concerns;
 
+use Digitonic\ApiTestSuite\TestResponse;
+use phpDocumentor\Reflection\Types\Boolean;
+
 trait AssertsOutput
 {
     protected $isCollection;
@@ -140,5 +143,22 @@ trait AssertsOutput
         );
 
         return $this->isCollection;
+    }
+
+    public function checkRequiredResponseHeaders(TestResponse $response): bool
+    {
+        return collect(
+            array_keys($this->requiredResponseHeaders())
+        )->reduce(
+            function ($carry, $index) use ($response){
+                return $carry && $response->assertHeader($index, $this->requiredResponseHeaders()[$index]);
+            },
+            true
+        );
+    }
+
+    protected function requiredResponseHeaders()
+    {
+        return config('digitonic.api-test-suite.required_response_headers');
     }
 }

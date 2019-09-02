@@ -8,6 +8,9 @@ This file is generated in `config/digitonic` when you run the installer command:
 ###### `api_user_class`
 This is the class that is used for your base user. _e.g.: Mdoc\Users\Models\User::class_
 
+###### `required_response_headers`
+An array of header-header value pairs to be returned by all your API routes. If any value goes, you can set the value of your header to null. This can be overwritten at the endpoint level by overwriting the `checkRequiredResponseHeaders` method of the AssertsOuput trait in your Test class. 
+
 ###### `default_headers`
 The default headers that will be passed to all your api calls. Keys should be capitalised, and prefixed with HTTP, guzzle style. _e.g.: ['HTTP_ACCEPT' => 'application/json']_
 
@@ -102,6 +105,9 @@ Return an array with the keys being the current entity's fields that should not 
 
 ###### `shouldAssertPaginate()`
 This should return true if the endpoint should be paginated, false otherwise. Usually useful for ListAll endpoints.
+
+###### `checkRequiredResponseHeaders()`
+Return a list of headers and values which have to be included in the response from the server for the endpoint at hand. If any value goes, you can set the value of your header to null.
 
 # Helper methods and fields
 You can obviously use any of the subroutines used in the runBaseApiTestSuite in order to write a more flexible, custom test suite for your endpoint.
