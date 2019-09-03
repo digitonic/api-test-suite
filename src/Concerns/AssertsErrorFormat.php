@@ -17,6 +17,7 @@ trait AssertsErrorFormat
     protected function assertErrorFormat(TestResponse $response, $status, $data = [])
     {
         $response->assertStatus($status);
+        $this->checkRequiredResponseHeaders($response);
         $this->assertRegExp(
             "/" . trim(
                 View::file(

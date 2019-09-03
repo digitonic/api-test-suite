@@ -98,6 +98,7 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
         /** @var TestResponse $response */
         $response = $this->doAuthenticatedRequest($data, [$this->getCurrentIdentifier()]);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $this->checkRequiredResponseHeaders($response);
         if ($assertValidationResponse) {
             $this->assertErrorFormat(
                 $response,
@@ -153,12 +154,12 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
             /** @var TestResponse $response */
             $response = $this->doAuthenticatedRequest($this->payload, [$this->getCurrentIdentifier()]);
             $response->assertStatus(Response::HTTP_CREATED);
+            $this->checkRequiredResponseHeaders($response);
             $this->checkTransformerData(
                 $this->getResponseData($response),
                 $this->identifier()
             );
             $this->assertCreatedOnlyOnce();
-            $this->checkRequiredResponseHeaders($response);
         }
     }
 
@@ -209,12 +210,12 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
             /** @var TestResponse $response */
             $response = $this->doAuthenticatedRequest($data, [$this->getCurrentIdentifier()]);
             $response->assertStatus(Response::HTTP_ACCEPTED);
+            $this->checkRequiredResponseHeaders($response);
             $this->checkTransformerData(
                 $this->getResponseData($response),
                 $this->identifier(),
                 $updatedAt
             );
-            $this->checkRequiredResponseHeaders($response);
 
             $class = $this->resourceClass();
             if ((new $class) instanceof Model) {
@@ -240,11 +241,11 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
         if ($this->shouldAssertRetrieve($this->httpAction())) {
             $response = $this->doAuthenticatedRequest([], [$this->getCurrentIdentifier()]);
             $response->assertStatus(Response::HTTP_OK);
+            $this->checkRequiredResponseHeaders($response);
             $this->checkTransformerData(
                 $this->getResponseData($response),
                 $this->identifier()
             );
-            $this->checkRequiredResponseHeaders($response);
         }
     }
 
@@ -259,11 +260,11 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
                     $response = $this->doAuthenticatedRequest([], ['page' => $page, 'per_page' => $entitiesPerPage]);
                     $this->assertPaginationFormat($response, $count, $entitiesNumber);
                     $response->assertStatus(Response::HTTP_OK);
+                    $this->checkRequiredResponseHeaders($response);
                     $this->checkTransformerData(
                         $this->getResponseData($response),
                         $this->identifier()
                     );
-                    $this->checkRequiredResponseHeaders($response);
                 }
             } else {
                 $response = $this->doAuthenticatedRequest([]);
@@ -274,11 +275,11 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
                     .'have been created (no pagination required)'
                 );
                 $response->assertStatus(Response::HTTP_OK);
+                $this->checkRequiredResponseHeaders($response);
                 $this->checkTransformerData(
                     $this->getResponseData($response),
                     $this->identifier()
                 );
-                $this->checkRequiredResponseHeaders($response);
             }
         }
     }
