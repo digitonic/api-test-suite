@@ -8,7 +8,7 @@ use Digitonic\ApiTestSuite\DataGeneration\Rules\Rule as BaseRule;
 
 class DateRule extends BaseRule implements Rule
 {
-    private $format;
+    private $format = 'Y-m-d H:i:s';
     private $before;
     private $after;
     private $strictAfter;
