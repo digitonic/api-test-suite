@@ -1,8 +1,8 @@
 # Digitonic API Test Suite
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/digitonic/api-test-suite.svg?style=flat-square)](https://packagist.org/packages/digitonic/api-test-suite)
-[![Build Status](https://img.shields.io/travis/digitonic/api-test-suite/master.svg?style=flat-square)](https://travis-ci.org/digitonic/api-test-suite)
-[![Quality Score](https://img.shields.io/scrutinizer/g/digitonic/api-test-suite.svg?style=flat-square)](https://scrutinizer-ci.com/g/digitonic/api-test-suite)
+[![Build Status](https://scrutinizer-ci.com/g/digitonic/api-test-suite/badges/build.png?b=master)](https://scrutinizer-ci.com/g/digitonic/api-test-suite/build-status/master)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/digitonic/api-test-suite/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/digitonic/api-test-suite/?branch=master)
 [![Total Downloads](https://img.shields.io/packagist/dt/digitonic/api-test-suite.svg?style=flat-square)](https://packagist.org/packages/digitonic/api-test-suite)
 
 A set of testing tools designed around the confirmation that each of your API endpoints is setup to conform to a configured standard.
@@ -25,13 +25,13 @@ $ php artisan digitonic:api-test-suite:install
 
 ### General structure
 
-The main class you will want to extend to enable the test framework functionalities is CRUDTestCase. This is the main entry point for the test suite automated assertions via the `runBaseApiTestSuite()`method. This class also provides a default `setUp()` method creating users. The CRUDTestCase class extends the base Laravel TestCase from your app, so it will take into account everything you change in there too, e.g. Migrations runs, setUp, or tearDown methods;
+The main class you will want to extend to enable the test framework functionality is CRUDTestCase. This is the main entry point for the test suite automated assertions via the `runBaseApiTestSuite()`method. This class also provides a default `setUp()` method creating users. The CRUDTestCase class extends the base Laravel TestCase from your app, so it will take into account everything you change in there too, e.g. Migrations runs, setUp, or tearDown methods;
 
 ### Configuration file
 This file is generated in `config/digitonic` when you run the installer command: `php artisan digitonic:api-test-suite:install` or `php artisan d:a:i` for short. It contains the following options:
 
 ###### `api_user_class`
-This is the class that is used for your base user. _e.g.: Mdoc\Users\Models\User::class_
+This is the class that is used for your base user. _e.g.: App\Models\User::class_
 
 ###### `required_response_headers`
 An array of header-header value pairs to be returned by all your API routes. If any value goes, you can set the value of your header to null. This can be overwritten at the endpoint level by overwriting the `checkRequiredResponseHeaders` method of the AssertsOuput trait in your Test class. 
@@ -45,10 +45,10 @@ Indicate here the maximum number of entities your responses should have on index
 ###### `identifier_field`
 A closure that returns a string determining the name of the ID field. You have access to the same context as your test here. _e.g.: function () {return 'uuid';} for a use of uuids across all entities_
 ###### `identifier_faker`
-A closure to fake an identifier. Mainly used for NOT_FOUND status code testing. _e.g.: function () {return \Mdoc\Concerns\HasUuid::generateUuid();}_
+A closure to fake an identifier. Mainly used for NOT_FOUND status code testing. _e.g.: function () {return \App\Concerns\HasUuid::generateUuid();}_
 
 ###### `templates`
-An array which contain a `base_path` key, with a string value indiciating the path to the templates for pagination and error responses . _e.g.: ['base_path' => base_path('tests/templates/')]_
+An array which contain a `base_path` key, with a string value indicating the path to the templates for pagination and error responses . _e.g.: ['base_path' => base_path('tests/templates/')]_
 
 ###### `creation_rules`
 ***Probably the most useful configuration option***. It allows to create ad hoc creation rules for your payloads. It should be an array with creation rules names used in your tests as keys, and closures returning an appropriate value as values. _e.g.:
@@ -58,7 +58,7 @@ An array which contain a `base_path` key, with a string value indiciating the pa
 This methods generates:
 - an `identifierGenerator` field usable anywhere in your tests, based on your `identifier_faker` configuration (see above).
 - A new `entities` field defaulting to an empty Laravel Collection.
-- A `user` field which will be the rightful user of your resources in your API. This relies on you creating a `crud` factory state for your `api_user_class` in your factories folder. This should set up the user default fields, and it's relation to a team/organization. See mDoc's [UserFactory](https://github.com/digitonic/mdoc/blob/develop/database/factories/UserFactory.php) for an example of how to set it up.
+- A `user` field which will be the rightful user of your resources in your API. This relies on you creating a `crud` factory state for your `api_user_class` in your factories folder. This should set up the user default fields, and it's relation to a team/organization.
 - An `otherUser` field which is created using the same factory, which represent a user that shouldn't have access to the resource being accessed. Make sure that your factory `crud` state creates a different team each time it is called.
 
 All these fields are available anywhere in your test class.
@@ -67,11 +67,11 @@ All these fields are available anywhere in your test class.
 This method is where the magic happen. Most classical CRUD endpoints will be able to use that method out of the box, but some more complexe endpoints might need to override it to get the context for the test suite right. If that was to be the case, all the CRUDTestCase methods are still available to help you build your test.
 
 This method runs the following assertions in order:
-- `Unauthorized` status code and error format when not providing an authoriztion token.
-- `Not Found` status code and error format when providing a non existant identifier for your resource.
+- `Unauthorized` status code and error format when not providing an authorization token.
+- `Not Found` status code and error format when providing a non existent identifier for your resource.
 - `Unprocessable entity` status code and error format when forgetting required fields.
 - `Forbidden` status code and error format when trying to access a resource you don't have permissions to access.
-- `Bad Request` status code and error format if a required header is missing (we need that to ensure that the `Accept: application/json` is systematically set, which is the guarentee of integrity of the output of your API, otherwise you may have web redirects happening on Unauthorized requests, for example). This can also be used to enforce any other HTTP header to be present. It will test the value for that header, if it is provided.
+- `Bad Request` status code and error format if a required header is missing (we need that to ensure that the `Accept: application/json` is systematically set, which is the guarantee of integrity of the output of your API, otherwise you may have web redirects happening on Unauthorized requests, for example). This can also be used to enforce any other HTTP header to be present. It will test the value for that header, if it is provided.
 - `Created` status code, and response data format, including provided links and timestamps, and the id replacement value if specified (e.g., `uuid` instead of `id`). If the resource shouldn't be duplicated, it will also make sure it is created only once (or twice, if it can be duplicated).
 - `Accepted` status code, and response data format, including provided links and timestamps (`updated_at` has to be updated), and the id replacement value if specified (e.g., `uuid` instead of `id`).
 - `OK` status code, and response data format, including provided links and timestamps, and the id replacement value if specified (e.g., `uuid` instead of `id`) for ListAll and Retrieve endpoints. In the case of a ListAll endpoint, pagination will also be tested for maximum numbers per page, and format, if the test is set to do so.
@@ -103,7 +103,7 @@ This should return true if the resource can be duplicated on several Create endp
 Should return one of these values as a string, according to the method your endpoint allows: get, post, put, or delete.
 
 ###### `requiredFields()`
-This should return a non associative array of required fields for your request. Most useful for Create endpoints. _e.g.: ['code', 'sender', 'mdoc', 'send_at', 'is_live']_
+This should return a non associative array of required fields for your request. Most useful for Create endpoints. _e.g.: ['code', 'sender', 'send_at', 'is_live']_
 
 ###### `requiredHeaders()`
 These are the headers you want to enforce the presence of in your request. It defaults to the default Headers from your configuration file if you're using the helper traits. _e.g.: ['HTTP_ACCEPT' => 'application/json']_
@@ -141,14 +141,14 @@ Useful methods provided by the CRUDTestCase class are the following:
 - `getCurrentIdentifier()` returns the identifier (according to your configuration file) of the entity being tested.
 - `doAuthenticatedRequest($data, array $params = [], $headers = [])` does the configured request for your endpoint, allows you to pass a $data array for your payload, and custom $params (used to build the target url, e.g. `campaignUuid`) and headers (these will override the default headers set in your configuration. If $headers is not set or is empty, they will use the default ones); It also sets the actingAs on the test to be $this->user.
 - `doRequest($data, array $params = [], $headers = [])` is the same as the above, but without setting the actingAs to $this->user
-- `getResponseData(TestResponse $response)` allorws you to easily extract the `data` attribute from your response.
+- `getResponseData(TestResponse $response)` allows you to easily extract the `data` attribute from your response.
 - `generateEntities($numberOfEntities, $httpAction, $baseUser, $otherUser)` will create the number of entities of the `resourceClass()`, for the $baseUser provided. In addition, the $otherUser will be used to create another entity, not belonging to the $baseUser if the $httpAction is 'get' and $this->viewableByOwnerOnly() returns true, in order to test that it can't be seen by the $baseUser.
 - `generatePayload($user)` returns a payload for the $user provided, that follows the rules returned by $this->creationRules().
 - `generateEntityOverApi(array $payload, $user)` creates the entity at hand for the payload and user provided. This needs the createResource method to return an endpoint name.
 - `generateUpdateData($payload, $user)` generate an update payload from the creation payload that is passed to it.
 - `identifier()` is the identifier key in the current context. This can be quite handy when trying to build a custom test, if you have problems creating the `identifier_field` closure in the api-test-suite config.
 
-- `generateSingleEntity($user, $payload = null)` returns an entity of the type at hand. I fyou don't pass a specific paylaod, it will use the above `generatePayload($user)` to create one.
+- `generateSingleEntity($user, $payload = null)` returns an entity of the type at hand. If you don't pass a specific payload, it will use the above `generatePayload($user)` to create one.
 
 ## Pagination and Error Templates
 Use the config file's `templates` field to indicate where your templates are for your automated test suite. By default they will be in `tests/templates`. Defaults are provided on running the installer command, to get you started.
@@ -157,7 +157,7 @@ Use the config file's `templates` field to indicate where your templates are for
 The pagination template has currently no default. If you keep it as is, this won't be used.
 
 ###### errors
-The error templates should be named after the statusCodes you are expecting (you then should have the following files: `400.blade.php, 401.blade.php, 403.blade.php, 404.blade.php and 422.blade.php`). For your convenience, templates allow the use of regular expressions, and the 422 template is being passed 2 variables: 'fieldName' (the required key undex scrutiny being tested from your `requiredFields()`, and 'formattedFieldName' which is the same field in snake_case.
+The error templates should be named after the statusCodes you are expecting (you then should have the following files: `400.blade.php, 401.blade.php, 403.blade.php, 404.blade.php and 422.blade.php`). For your convenience, templates allow the use of regular expressions, and the 422 template is being passed 2 variables: 'fieldName' (the required key under scrutiny being tested from your `requiredFields()`, and 'formattedFieldName' which is the same field in snake_case.
 
 ### Testing
 
@@ -179,13 +179,10 @@ If you discover any security related issues, please email steven@digitonic.co.uk
 
 ## Credits
 
-- [Steven Richardson](https://github.com/digitonic)
+- [Yannick Glade](https://github.com/MrTammer)
+- [Chris Crawford](https://github.com/ChrisCrawford1)
 - [All Contributors](../../contributors)
 
 ## License
 
 The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
-
-## Laravel Package Boilerplate
-
-This package was generated using the [Laravel Package Boilerplate](https://laravelpackageboilerplate.com).
