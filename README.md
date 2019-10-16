@@ -1,8 +1,33 @@
-# General structure
+# Digitonic API Test Suite
+
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/digitonic/api-test-suite.svg?style=flat-square)](https://packagist.org/packages/digitonic/api-test-suite)
+[![Build Status](https://img.shields.io/travis/digitonic/api-test-suite/master.svg?style=flat-square)](https://travis-ci.org/digitonic/api-test-suite)
+[![Quality Score](https://img.shields.io/scrutinizer/g/digitonic/api-test-suite.svg?style=flat-square)](https://scrutinizer-ci.com/g/digitonic/api-test-suite)
+[![Total Downloads](https://img.shields.io/packagist/dt/digitonic/api-test-suite.svg?style=flat-square)](https://packagist.org/packages/digitonic/api-test-suite)
+
+A set of testing tools designed around the confirmation that each of your API endpoints is setup to conform to a configured standard.
+
+## Installation
+
+You can install the package via composer:
+
+```bash
+$ composer require digitonic/api-test-suite
+```
+
+#### Install Config & Templates
+
+```bash
+$ php artisan digitonic:api-test-suite:install
+```
+
+## Usage
+
+### General structure
 
 The main class you will want to extend to enable the test framework functionalities is CRUDTestCase. This is the main entry point for the test suite automated assertions via the `runBaseApiTestSuite()`method. This class also provides a default `setUp()` method creating users. The CRUDTestCase class extends the base Laravel TestCase from your app, so it will take into account everything you change in there too, e.g. Migrations runs, setUp, or tearDown methods;
 
-## Configuration file
+### Configuration file
 This file is generated in `config/digitonic` when you run the installer command: `php artisan digitonic:api-test-suite:install` or `php artisan d:a:i` for short. It contains the following options:
 
 ###### `api_user_class`
@@ -29,7 +54,7 @@ An array which contain a `base_path` key, with a string value indiciating the pa
 ***Probably the most useful configuration option***. It allows to create ad hoc creation rules for your payloads. It should be an array with creation rules names used in your tests as keys, and closures returning an appropriate value as values. _e.g.:
 ```['tomorrow' => function () {return Carbon::parse('+1day')->format('Y-m-d H:i:s');}]``` allows you to generate the date of tomorrow in your payloads. We'll come back to it when we'll see the `creationRules()` method_
 
-## `setUp()` method
+### `setUp()` method
 This methods generates:
 - an `identifierGenerator` field usable anywhere in your tests, based on your `identifier_faker` configuration (see above).
 - A new `entities` field defaulting to an empty Laravel Collection.
@@ -38,7 +63,7 @@ This methods generates:
 
 All these fields are available anywhere in your test class.
 
-## `runBaseApiTestSuite()` method
+### `runBaseApiTestSuite()` method
 This method is where the magic happen. Most classical CRUD endpoints will be able to use that method out of the box, but some more complexe endpoints might need to override it to get the context for the test suite right. If that was to be the case, all the CRUDTestCase methods are still available to help you build your test.
 
 This method runs the following assertions in order:
@@ -54,10 +79,10 @@ This method runs the following assertions in order:
 
 Which assertion will be run is determined by the `DeterminesAssertions` Trait in the `CRUDTestCase` class. The method is based on the metadata you provide about your endpoint through the implementation of the CRUDTestCase abstract methods. I encourage you to read that file if you find unexpected assertions being run, and to override them if necessary.
 
-# Test interface implementation
+## Test interface implementation
 To help you, the package provides you with a a few Traits that you can use to set the defaults for Create, Retrieve, Update, ListAll, and Delete actions (`TestsCreateAction`,`TestsRetrieveAction`,`TestsUpdateAction`,`TestsListAllAction`, and `TestsDeleteAction` respectively). These provides with sensible defaults for the `httpAction()`, `statusCodes()`, `shouldAssertPaginate()`, `requiredHeaders()`, `creationHeaders()`, `requiredFields()` and `cannotBeDuplicated()` methods below. These can be overwritten in your test class if needed.
 
-## Resource metadata
+### Resource metadata
 ###### `resourceClass()`
 Return the class name for the entity at hands.
 
@@ -86,7 +111,7 @@ These are the headers you want to enforce the presence of in your request. It de
 ###### `creationHeaders()`
 If you choose to use the API to create your resources (see `createResource()` method below), this should match the requiredHeaders() return value for your Create endpoint. _e.g.: ['HTTP_ACCEPT' => 'application/json']_
 
-## Response metadata
+### Response metadata
 ###### `statusCodes()`
 ***This method determines what status codes should be returned by your endpoint, that is the different scenarios to be tested for success and errors. As such, it is very important to understans***
 This method shold return an array of statusCodes from the list above in the `runBaseApiTestSuite()` method section. However the default from the helper traits are most often that not the ones you're after. _e.g.: [Response::HTTP_CREATED,Response::HTTP_UNPROCESSABLE_ENTITY,Response::HTTP_UNAUTHORIZED]_
@@ -109,7 +134,7 @@ This should return true if the endpoint should be paginated, false otherwise. Us
 ###### `checkRequiredResponseHeaders()`
 Return a list of headers and values which have to be included in the response from the server for the endpoint at hand. If any value goes, you can set the value of your header to null.
 
-# Helper methods and fields
+## Helper methods and fields
 You can obviously use any of the subroutines used in the runBaseApiTestSuite in order to write a more flexible, custom test suite for your endpoint.
 
 Useful methods provided by the CRUDTestCase class are the following:
@@ -125,7 +150,7 @@ Useful methods provided by the CRUDTestCase class are the following:
 
 - `generateSingleEntity($user, $payload = null)` returns an entity of the type at hand. I fyou don't pass a specific paylaod, it will use the above `generatePayload($user)` to create one.
 
-# Pagination and Error Templates
+## Pagination and Error Templates
 Use the config file's `templates` field to indicate where your templates are for your automated test suite. By default they will be in `tests/templates`. Defaults are provided on running the installer command, to get you started.
 
 ###### pagination
@@ -134,3 +159,33 @@ The pagination template has currently no default. If you keep it as is, this won
 ###### errors
 The error templates should be named after the statusCodes you are expecting (you then should have the following files: `400.blade.php, 401.blade.php, 403.blade.php, 404.blade.php and 422.blade.php`). For your convenience, templates allow the use of regular expressions, and the 422 template is being passed 2 variables: 'fieldName' (the required key undex scrutiny being tested from your `requiredFields()`, and 'formattedFieldName' which is the same field in snake_case.
 
+### Testing
+
+``` bash
+composer test
+```
+
+### Changelog
+
+Please see [CHANGELOG](CHANGELOG.md) for more information what has changed recently.
+
+## Contributing
+
+Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
+
+### Security
+
+If you discover any security related issues, please email steven@digitonic.co.uk instead of using the issue tracker.
+
+## Credits
+
+- [Steven Richardson](https://github.com/digitonic)
+- [All Contributors](../../contributors)
+
+## License
+
+The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+
+## Laravel Package Boilerplate
+
+This package was generated using the [Laravel Package Boilerplate](https://laravelpackageboilerplate.com).

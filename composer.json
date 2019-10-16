@@ -1,27 +1,61 @@
 {
-  "name": "digitonic/api-test-suite",
-  "type": "laravel package",
-  "authors": [
-    {
-      "name": "MrTammer",
-      "email": "juanick@hotmail.fr"
+    "name": "digitonic/api-test-suite",
+    "description": "A Laravel API CRUD testing framework",
+    "keywords": [
+        "digitonic",
+        "api-test-suite"
+    ],
+    "homepage": "https://github.com/digitonic/api-test-suite",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "yannick-digitonic",
+            "email": "yannick@digitonic.co.uk",
+            "role": "Developer"
+        },
+        {
+            "name": "Christopher Crawford",
+            "email": "christopher@digitonic.co.uk",
+            "role": "Developer"
+        },
+        {
+            "name": "Steven Richardson",
+            "email": "steven@digitonic.co.uk",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^7.1",
+        "illuminate/support": "5.8.*|6.*"
+    },
+    "require-dev": {
+        "orchestra/testbench": "3.8.*",
+        "phpunit/phpunit": "^7.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Digitonic\\ApiTestSuite\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Digitonic\\ApiTestSuite\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Digitonic\\ApiTestSuite\\ApiTestSuiteServiceProvider"
+            ]
+        }
     }
-  ],
-  "minimum-stability": "stable",
-  "require": {
-    "ext-json": "*",
-    "php": ">=7.0"
-  },
-  "autoload": {
-    "psr-4": {
-      "Digitonic\\ApiTestSuite\\": "src/"
-    }
-  },
-  "extra": {
-    "laravel": {
-      "providers": [
-        "Digitonic\\ApiTestSuite\\ApiTestSuiteServiceProvider"
-      ]
-    }
-  }
 }
