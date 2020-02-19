@@ -36,7 +36,7 @@ trait GeneratesTestData
         }
     }
 
-    protected function generatePayload($user)
+    public function generatePayload($user)
     {
         $payload = [];
         $rules = $this->creationRules();
@@ -49,7 +49,7 @@ trait GeneratesTestData
         return $payload;
     }
 
-    protected function generateSingleEntity($user, $payload = null)
+    public function generateSingleEntity($user, $payload = null)
     {
         if (!$payload) {
             $payload = $this->generatePayload($user);
