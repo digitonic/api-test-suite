@@ -30,7 +30,7 @@ trait AssertPagination
      */
     protected function assertPaginationResponseStructure(TestResponse $response, $total)
     {
-        $this->assertRegExp(
+        $this->assertMatchesRegularExpression(
             "/" . View::file(
                 config('digitonic.api-test-suite.templates.base_path') . 'pagination/pagination.blade.php',
                 [

@@ -18,7 +18,7 @@ trait AssertsErrorFormat
     {
         $response->assertStatus($status);
         $this->checkRequiredResponseHeaders($response);
-        $this->assertRegExp(
+        $this->assertMatchesRegularExpression(
             "/" . trim(
                 View::file(
                     config('digitonic.api-test-suite.templates.base_path') . 'errors/' . $status . '.blade.php',
