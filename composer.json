@@ -26,8 +26,8 @@
         }
     ],
     "require": {
-        "php": "^7.1",
-        "illuminate/support": "5.8.*|6.*"
+        "php": "^7.1|8.0",
+        "illuminate/support": "5.8.*|6.*|7.*|8.*"
     },
     "require-dev": {
         "orchestra/testbench": "3.8.*",
