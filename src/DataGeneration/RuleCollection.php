@@ -44,7 +44,7 @@ class RuleCollection extends Collection
         $this->required = $required;
     }
 
-    public function push($value)
+    public function pushNew($value)
     {
         if ($value instanceof DateRule) {
             foreach ($this->items as $index => $rule) {

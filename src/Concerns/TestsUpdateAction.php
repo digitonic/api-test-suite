@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Digitonic\ApiTestSuite\Concerns;
 
 use Illuminate\Http\Response;

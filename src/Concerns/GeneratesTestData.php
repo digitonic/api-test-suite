@@ -3,7 +3,7 @@
 namespace Digitonic\ApiTestSuite\Concerns;
 
 use Digitonic\ApiTestSuite\DataGeneration\RuleParser;
-use Illuminate\Foundation\Testing\TestResponse;
+use Illuminate\Testing\TestResponse;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Collection;
 

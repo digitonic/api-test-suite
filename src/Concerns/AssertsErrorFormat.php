@@ -3,6 +3,7 @@
 namespace Digitonic\ApiTestSuite\Concerns;
 
 use Illuminate\Support\Facades\View;
+use Illuminate\Testing\Assert as PHPUnit;
 use Digitonic\ApiTestSuite\TestResponse;
 
 trait AssertsErrorFormat
@@ -18,7 +19,7 @@ trait AssertsErrorFormat
     {
         $response->assertStatus($status);
         $this->checkRequiredResponseHeaders($response);
-        $this->assertMatchesRegularExpression(
+        PHPUnit::assertMatchesRegularExpression(
             "/" . trim(
                 View::file(
                     config('digitonic.api-test-suite.templates.base_path') . 'errors/' . $status . '.blade.php',

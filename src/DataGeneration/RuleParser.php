@@ -52,7 +52,7 @@ class RuleParser
         foreach ($rulesArray as $rule) {
             $ruleName = $this->getRuleName($rule);
             $params = $this->getRuleParams($rule);
-            $ruleSet->push($factory->build($ruleName, $params));
+            $ruleSet->pushNew($factory->build($ruleName, $params));
         }
 
         return $ruleSet;

@@ -2,7 +2,7 @@
 
 namespace Digitonic\ApiTestSuite\Concerns;
 
-use Illuminate\Foundation\Testing\TestResponse;
+use Illuminate\Testing\TestResponse;
 
 trait InteractsWithApi
 {
