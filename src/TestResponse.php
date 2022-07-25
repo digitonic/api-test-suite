@@ -1,9 +1,9 @@
 <?php
 
 namespace Digitonic\ApiTestSuite;
-use Illuminate\Foundation\Testing\Assert as PHPUnit;
+use Illuminate\Testing\Assert as PHPUnit;
 
-class TestResponse extends \Illuminate\Foundation\Testing\TestResponse
+class TestResponse extends \Illuminate\Testing\TestResponse
 {
     /**
      * Assert that the response has the given status code.
