@@ -2,7 +2,8 @@
 
 namespace Digitonic\ApiTestSuite\Concerns;
 
-use Illuminate\Foundation\Testing\TestResponse;
+use Illuminate\Testing\TestResponse;
+use Illuminate\Testing\Assert as PHPUnit;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\View;
 
@@ -30,7 +31,7 @@ trait AssertPagination
      */
     protected function assertPaginationResponseStructure(TestResponse $response, $total)
     {
-        $this->assertMatchesRegularExpression(
+        PHPUnit::assertMatchesRegularExpression(
             "/" . View::file(
                 config('digitonic.api-test-suite.templates.base_path') . 'pagination/pagination.blade.php',
                 [
