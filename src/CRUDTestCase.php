@@ -16,6 +16,8 @@ use Digitonic\ApiTestSuite\Contracts\InteractsWithApi as InteractsWithApiI;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
+use Illuminate\Testing\LoggedExceptionCollection;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOutputI, InteractsWithApiI, DeterminesAssertionsI, GeneratesTestDataI
@@ -304,14 +306,14 @@ abstract class CRUDTestCase extends TestCase implements CRUDTestCaseI, AssertsOu
         }
     }
 
-    /**
-     * Create the test response instance from the given response.
-     *
-     * @param  \Illuminate\Http\Response $response
-     * @return TestResponse
-     */
-    protected function createTestResponse($response)
+    protected function createTestResponse($response, $request)
     {
-        return TestResponse::fromBaseResponse($response);
+        return tap(TestResponse::fromBaseResponse($response, $request), function ($response) {
+            $response->withExceptions(
+                $this->app->bound(LoggedExceptionCollection::class)
+                    ? $this->app->make(LoggedExceptionCollection::class)
+                    : new LoggedExceptionCollection
+            );
+        });
     }
 }
