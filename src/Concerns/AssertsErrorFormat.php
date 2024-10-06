@@ -4,7 +4,7 @@ namespace Digitonic\ApiTestSuite\Concerns;
 
 use Illuminate\Support\Facades\View;
 use Illuminate\Testing\Assert as PHPUnit;
-use Digitonic\ApiTestSuite\TestResponse;
+use Illuminate\Testing\TestResponse;
 
 trait AssertsErrorFormat
 {

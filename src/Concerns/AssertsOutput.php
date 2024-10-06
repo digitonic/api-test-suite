@@ -2,7 +2,7 @@
 
 namespace Digitonic\ApiTestSuite\Concerns;
 
-use Digitonic\ApiTestSuite\TestResponse;
+use Illuminate\Testing\TestResponse;
 use phpDocumentor\Reflection\Types\Boolean;
 
 trait AssertsOutput
